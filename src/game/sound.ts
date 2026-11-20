@@ -1,22 +1,54 @@
 import logoClipUrl from '../../audio/kidsudoku-japanese.mp3';
 
+export type HapticKind = 'tap' | 'wrong' | 'correct' | 'setComplete';
+
+const HAPTIC_PATTERNS: Record<HapticKind, number | number[]> = {
+  tap: 10,
+  wrong: [16, 36, 16],
+  correct: [14, 28, 22],
+  setComplete: [18, 36, 18, 36, 42],
+};
+
+export function triggerHaptic(kind: HapticKind): void {
+  if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
+    return;
+  }
+  try {
+    navigator.vibrate(HAPTIC_PATTERNS[kind]);
+  } catch {
+    // Ignore restricted/unsupported vibration calls
+  }
+}
+
 class SoundEngine {
   private ctx: AudioContext | null = null;
   private logoAudio: HTMLAudioElement | null = null;
+  private logoBuffer: AudioBuffer | null = null;
+  private logoBufferPromise: Promise<AudioBuffer | null> | null = null;
+  private logoSource: AudioBufferSourceNode | null = null;
   private logoPlayToken = 0;
   private enabled = true;
 
   setEnabled(value: boolean) {
     this.enabled = value;
-    if (!value && this.logoAudio) {
-      this.logoAudio.pause();
-      this.logoAudio.currentTime = 0;
-      this.logoPlayToken++;
+    if (!value) {
+      this.stopLogoClip();
     }
   }
 
   isEnabled(): boolean {
     return this.enabled;
+  }
+
+  /**
+   * Call on first user pointer interaction to unlock iOS Safari AudioContext
+   * and preload/decode the logo MP3 for zero-latency playback.
+   */
+  unlock() {
+    const ctx = this.getContext();
+    if (ctx) {
+      void this.preloadLogoBuffer(ctx);
+    }
   }
 
   private getContext(): AudioContext | null {
@@ -40,6 +72,40 @@ class SoundEngine {
     return this.ctx;
   }
 
+  private preloadLogoBuffer(ctx: AudioContext): Promise<AudioBuffer | null> {
+    if (this.logoBuffer) return Promise.resolve(this.logoBuffer);
+    if (this.logoBufferPromise) return this.logoBufferPromise;
+
+    this.logoBufferPromise = fetch(logoClipUrl)
+      .then((res) => (res.ok ? res.arrayBuffer() : null))
+      .then((arr) => (arr ? ctx.decodeAudioData(arr) : null))
+      .then((decoded) => {
+        this.logoBuffer = decoded;
+        return decoded;
+      })
+      .catch(() => null);
+
+    return this.logoBufferPromise;
+  }
+
+  private stopLogoClip() {
+    this.logoPlayToken++;
+    if (this.logoSource) {
+      try {
+        this.logoSource.onended = null;
+        this.logoSource.stop();
+      } catch {
+        // Ignore already-stopped source
+      }
+      this.logoSource.disconnect();
+      this.logoSource = null;
+    }
+    if (this.logoAudio) {
+      this.logoAudio.pause();
+      this.logoAudio.currentTime = 0;
+    }
+  }
+
   private playMarimbaNote(
     ctx: AudioContext,
     freq: number,
@@ -55,7 +121,7 @@ class SoundEngine {
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq, startTime);
 
-    // Subtle wooden harmonic (4x frequency decays very fast like a marimba bar)
+    // Subtle wooden harmonic decays quickly like a marimba bar
     overtone.type = 'triangle';
     overtone.frequency.setValueAtTime(freq * 2, startTime);
 
@@ -106,7 +172,6 @@ class SoundEngine {
     if (!ctx) return;
 
     const now = ctx.currentTime;
-    // C5, E5, G5, C6 (and extra sparkle E6 on streaks >= 3)
     const notes =
       streak >= 3
         ? [523.25, 659.25, 783.99, 1046.5, 1318.5]
@@ -141,7 +206,6 @@ class SoundEngine {
     if (!ctx) return;
 
     const now = ctx.currentTime;
-    // Gentle soft wooden double-nudge (never harsh)
     this.playMarimbaNote(ctx, 261.63, now, 0.18, 0.1);
     this.playMarimbaNote(ctx, 220.0, now + 0.09, 0.22, 0.09);
   }
@@ -156,7 +220,43 @@ class SoundEngine {
   }
 
   playLogoClip(onFinish?: () => void): boolean {
-    if (!this.enabled || typeof Audio === 'undefined') {
+    if (!this.enabled || typeof window === 'undefined') {
+      return false;
+    }
+
+    this.stopLogoClip();
+    const token = this.logoPlayToken;
+
+    const finish = () => {
+      if (this.logoPlayToken === token) {
+        onFinish?.();
+      }
+    };
+
+    // Fast path: play pre-decoded AudioBuffer via Web Audio API (zero latency on iOS Safari)
+    const ctx = this.getContext();
+    if (ctx && this.logoBuffer) {
+      const source = ctx.createBufferSource();
+      source.buffer = this.logoBuffer;
+      source.connect(ctx.destination);
+      source.onended = () => {
+        if (this.logoSource === source) {
+          this.logoSource = null;
+        }
+        finish();
+      };
+      this.logoSource = source;
+      source.start(0);
+      return true;
+    }
+
+    // Start decoding in background for subsequent instant plays
+    if (ctx) {
+      void this.preloadLogoBuffer(ctx);
+    }
+
+    // Immediate fallback via HTMLAudioElement on very first tap before decode finishes
+    if (typeof Audio === 'undefined') {
       return false;
     }
 
@@ -165,18 +265,12 @@ class SoundEngine {
       this.logoAudio.preload = 'auto';
     }
 
-    const token = ++this.logoPlayToken;
     const audio = this.logoAudio;
-
-    const finish = () => {
-      if (this.logoPlayToken === token) {
-        onFinish?.();
-      }
-    };
-
     audio.onended = finish;
     audio.onerror = finish;
-    audio.currentTime = 0;
+    if (audio.readyState >= 1) {
+      audio.currentTime = 0;
+    }
 
     const playPromise = audio.play();
     if (playPromise) {

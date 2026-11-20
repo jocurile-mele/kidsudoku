@@ -3,25 +3,25 @@ import { TARGET_SUM, type Puzzle } from '../game/puzzle';
 
 export const HINT_GROUP_STYLES = [
   {
-    name: 'sky',
-    dot: 'bg-[#5A87B2]',
-    ring: 'ring-[#5A87B2]/35',
-    badge: 'bg-[#eaf2f9] text-[#3d658a] border-[#c8dceb]',
-    bead: 'bg-gradient-to-b from-[#6c98c2] to-[#527da7] shadow-[0_2px_0_#3f668c]',
+    name: 'cobalt',
+    dot: 'bg-[#3B7DD8]',
+    ring: 'ring-[#3B7DD8]/35',
+    badge: 'bg-[#eaf2fc] text-[#285da8] border-[#c2d8f5]',
+    bead: 'bg-gradient-to-b from-[#5694E8] to-[#3271C8] shadow-[0_2px_0_#235296]',
   },
   {
-    name: 'coral',
-    dot: 'bg-[#DF755B]',
-    ring: 'ring-[#DF755B]/35',
-    badge: 'bg-[#fdede8] text-[#ad4b34] border-[#f2c6b9]',
-    bead: 'bg-gradient-to-b from-[#ea846a] to-[#d6674c] shadow-[0_2px_0_#b24e36]',
+    name: 'orange',
+    dot: 'bg-[#EC7B29]',
+    ring: 'ring-[#EC7B29]/35',
+    badge: 'bg-[#fef1e6] text-[#b5500d] border-[#f6cfa9]',
+    bead: 'bg-gradient-to-b from-[#F69346] to-[#E16B1C] shadow-[0_2px_0_#B44F0E]',
   },
   {
-    name: 'sage',
-    dot: 'bg-[#53A382]',
-    ring: 'ring-[#53A382]/35',
-    badge: 'bg-[#e8f6ef] text-[#2e7357] border-[#bde2d1]',
-    bead: 'bg-gradient-to-b from-[#64b392] to-[#499877] shadow-[0_2px_0_#35795d]',
+    name: 'plum',
+    dot: 'bg-[#9B51B6]',
+    ring: 'ring-[#9B51B6]/35',
+    badge: 'bg-[#f6ecf9] text-[#6d3185] border-[#dec1ea]',
+    bead: 'bg-gradient-to-b from-[#B06BCA] to-[#8A42A6] shadow-[0_2px_0_#662B7E]',
   },
 ] as const;
 
@@ -92,7 +92,7 @@ export function TenFrameHint({ puzzle, hintLevel, solved }: TenFrameHintProps) {
             return (
               <div
                 key={i}
-                className="h-9 rounded-lg bg-[#fbf7ef] border border-[#e3d9c5] flex items-center justify-center p-1.5"
+                className="h-8 sm:h-9 rounded-lg bg-[#fbf7ef] border border-[#e3d9c5] flex items-center justify-center p-1"
               >
                 {isGivenBead && style ? (
                   <motion.div
@@ -104,7 +104,7 @@ export function TenFrameHint({ puzzle, hintLevel, solved }: TenFrameHintProps) {
                       damping: 20,
                       delay: i * 0.03,
                     }}
-                    className={`w-6 h-6 rounded-full ${style.bead}`}
+                    className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full ${style.bead}`}
                   />
                 ) : solved ? (
                   <motion.div
@@ -116,14 +116,14 @@ export function TenFrameHint({ puzzle, hintLevel, solved }: TenFrameHintProps) {
                       damping: 18,
                       delay: (i - puzzle.givenSum) * 0.05,
                     }}
-                    className="w-6 h-6 rounded-full bg-gradient-to-b from-[#69ba98] to-[#4a9d7c] shadow-[0_2px_0_#317559]"
+                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-b from-[#69ba98] to-[#4a9d7c] shadow-[0_2px_0_#317559]"
                   />
                 ) : (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.18 + (i - puzzle.givenSum) * 0.04 }}
-                    className="w-6 h-6 rounded-full border-2 border-dashed border-amber-warm/75 bg-amber-wash/75 animate-pulse-soft"
+                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-dashed border-amber-warm/80 bg-amber-wash/75 animate-pulse-soft"
                   />
                 )}
               </div>

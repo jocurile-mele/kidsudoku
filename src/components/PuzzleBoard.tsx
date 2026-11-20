@@ -65,13 +65,13 @@ export function PuzzleBoard({
       {/* 2x2 Tactile Square Tray */}
       <div
         ref={boardRef}
-        className={`relative board-tray p-3 sm:p-3.5 rounded-[26px] border transition-colors duration-300 w-[252px] h-[252px] sm:w-[276px] sm:h-[276px] ${
+        className={`relative board-tray p-3 sm:p-3.5 rounded-[26px] border transition-colors duration-300 w-[clamp(216px,64vw,276px)] h-[clamp(216px,64vw,276px)] [@media(max-height:700px)]:w-[214px] [@media(max-height:700px)]:h-[214px] [@media(orientation:landscape)_and_(max-height:520px)]:w-[200px] [@media(orientation:landscape)_and_(max-height:520px)]:h-[200px] ${
           solved
             ? 'border-[#a7d8c1] ring-4 ring-sage/15'
             : 'border-[#dfd3bd]'
         }`}
         role="grid"
-        aria-label="2 by 2 Make 10 puzzle square"
+        aria-label="2 by 2 KidSudoku puzzle square"
       >
         {/* Subtle cross-hair dividers */}
         <div
@@ -94,7 +94,7 @@ export function PuzzleBoard({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.94 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 grid grid-cols-2 grid-rows-2 gap-3.5 sm:gap-4 w-full h-full"
+            className="relative z-10 grid grid-cols-2 grid-rows-2 gap-3 sm:gap-4 w-full h-full"
           >
             {puzzle.cells.map((value, index) => {
               const isMissing = value === null;

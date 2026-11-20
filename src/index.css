@@ -37,7 +37,10 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
     touch-action: manipulation;
+    overscroll-behavior: none;
     user-select: none;
   }
 
@@ -98,21 +101,31 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
+.safe-shell {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
 .num-key {
   background: linear-gradient(180deg, #ffffff 0%, #fcf8f0 100%);
   box-shadow:
     0 4px 0 #d9ceb9,
     0 6px 12px -4px rgba(72, 58, 36, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  transition: box-shadow 0.12s ease, background-color 0.15s ease, opacity 0.2s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease, opacity 0.2s ease;
 }
 
-.num-key:hover:not(:disabled) {
-  background: linear-gradient(180deg, #ffffff 0%, #fef9ed 100%);
-  box-shadow:
-    0 5px 0 #d4c4a4,
-    0 9px 16px -4px rgba(72, 58, 36, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.98);
+@media (hover: hover) and (pointer: fine) {
+  .num-key:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: linear-gradient(180deg, #ffffff 0%, #fef9ed 100%);
+    box-shadow:
+      0 5px 0 #d4c4a4,
+      0 9px 16px -4px rgba(72, 58, 36, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.98);
+  }
 }
 
 .num-key:active:not(:disabled) {

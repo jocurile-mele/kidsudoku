@@ -46,7 +46,6 @@ export function NumberPad({
         type="button"
         disabled={disabled}
         onClick={() => onSelect(digit)}
-        whileHover={disabled ? undefined : { y: -2 }}
         whileTap={disabled ? undefined : { y: 3, scale: 0.96 }}
         animate={
           isWinningKey
@@ -57,7 +56,7 @@ export function NumberPad({
         }
         transition={{ type: 'spring', stiffness: 520, damping: 22 }}
         aria-label={`Choose ${digit}`}
-        className={`relative w-12 h-[52px] sm:w-[58px] sm:h-[60px] rounded-2xl border font-display text-2xl sm:text-[26px] font-bold flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
+        className={`relative w-[clamp(42px,13.4vw,58px)] h-[clamp(46px,13vw,60px)] [@media(max-height:700px)]:h-[46px] [@media(orientation:landscape)_and_(max-height:520px)]:w-[46px] [@media(orientation:landscape)_and_(max-height:520px)]:h-[44px] [@media(orientation:landscape)_and_(max-height:520px)]:text-xl rounded-2xl border font-display text-[22px] sm:text-[26px] font-bold flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
           disabled ? 'cursor-default' : 'cursor-pointer'
         } ${styleClass}`}
       >
@@ -68,14 +67,14 @@ export function NumberPad({
 
   return (
     <div
-      className="w-full max-w-md mx-auto flex flex-col items-center gap-2.5 sm:gap-3"
+      className="w-full max-w-md mx-auto flex flex-col items-center gap-2 sm:gap-3"
       role="group"
       aria-label="Number choices from 0 to 10"
     >
-      <div className="flex items-center justify-center gap-2 sm:gap-2.5">
+      <div className="flex items-center justify-center gap-1.5 sm:gap-2.5">
         {TOP_ROW.map(renderKey)}
       </div>
-      <div className="flex items-center justify-center gap-2 sm:gap-2.5">
+      <div className="flex items-center justify-center gap-1.5 sm:gap-2.5">
         {BOTTOM_ROW.map(renderKey)}
       </div>
     </div>
