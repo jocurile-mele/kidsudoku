@@ -89,6 +89,25 @@ describe("architecture guardrails (Dune contract)", () => {
     expect(violations).toEqual([]);
   });
 
+  it("restricts storage read/write imports to the single-writer progress hook", () => {
+    const owner = "src/state/useProgress.ts";
+    const storageModule = "src/game/storage.ts";
+    const violations: string[] = [];
+
+    for (const file of sourceFiles) {
+      const r = rel(file);
+      if (r === owner || r === storageModule) continue;
+      const content = stripComments(fs.readFileSync(file, "utf8"));
+      if (/\b(loadProgress|saveProgress)\b/.test(content)) {
+        violations.push(
+          `${r} reads/writes progress directly — use named commands on useProgress() from ${owner}.`,
+        );
+      }
+    }
+
+    expect(violations).toEqual([]);
+  });
+
   it("forbids silent lint or type suppressions in application source", () => {
     const violations: string[] = [];
     const suppressionPattern =

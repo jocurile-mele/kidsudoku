@@ -24,15 +24,10 @@ import {
   isSudokuSolved,
   type Sudoku4x4Puzzle,
 } from "./game/sudoku4x4";
-import { STAMPS, type StampDefinition, type StampId, type ThemeId } from "./game/stamps";
+import { type StampId, type ThemeId } from "./game/stamps";
 import { soundEngine, triggerHaptic } from "./game/sound";
 import { fireSetCompleteConfetti, fireSolvedConfetti } from "./game/confetti";
-import {
-  getTotalRewardCount,
-  loadProgress,
-  saveProgress,
-  type PersistedProgress,
-} from "./game/storage";
+import { useProgress } from "./state/useProgress";
 import { Header } from "./components/Header";
 import { ModeBar, type GameMode } from "./components/ModeBar";
 import { PuzzleBoard } from "./components/PuzzleBoard";
@@ -57,12 +52,6 @@ type FeedbackState =
 const AUTO_ADVANCE_NORMAL_MS = 4236; // φ³ × 1000 ms
 const AUTO_ADVANCE_MILESTONE_MS = 5236; // 2φ² × 1000 ms (same 2/φ ratio)
 
-const THEME_META_COLORS: Record<ThemeId, string> = {
-  "warm-paper": "#FBF7EF",
-  "matcha-garden": "#F2F7F0",
-  "cozy-dusk": "#1D222E",
-};
-
 const DIGITS_5 = [0, 1, 2, 3, 4, 5] as const;
 const DIGITS_10 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 const DIGITS_20 = Array.from({ length: 21 }, (_, i) => i);
@@ -74,14 +63,23 @@ function firstEmptySudokuCell(board: Array<number | null>): number | null {
 }
 
 export default function App() {
-  const [progress, setProgress] = useState<PersistedProgress>(() => {
-    const loaded = loadProgress();
-    soundEngine.setEnabled(loaded.soundEnabled);
-    return loaded;
-  });
-
   const todayKey = useMemo(() => getTodayDateKey(), []);
   const dailyPuzzles = useMemo(() => generateDailyPuzzles(todayKey), [todayKey]);
+
+  const {
+    progress,
+    rewardCount,
+    hasUnseenReward,
+    dailyCompletedToday,
+    unlockedToast,
+    recordSolve,
+    setTargetSum,
+    setTheme,
+    pinStamp,
+    toggleSound,
+    togglePips,
+    markRewardsSeen,
+  } = useProgress(todayKey);
 
   const [mode, setMode] = useState<GameMode>("classic");
   const targetSum = progress.targetSum;
@@ -120,34 +118,17 @@ export default function App() {
   const [sudokuConflictKey, setSudokuConflictKey] = useState(0);
   const [sudokuSolved, setSudokuSolved] = useState(false);
 
-  // Modals, logo sound, stamp unlock toast
+  // Modals & logo sound
   const [helpOpen, setHelpOpen] = useState(false);
   const [shelfOpen, setShelfOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [logoPlaying, setLogoPlaying] = useState(false);
   const [logoPressCount, setLogoPressCount] = useState(0);
-  const [unlockedToast, setUnlockedToast] = useState<StampDefinition | null>(null);
 
   const boardRef = useRef<HTMLDivElement | null>(null);
   const autoAdvanceTimerRef = useRef<number | null>(null);
   const wrongClearTimerRef = useRef<number | null>(null);
   const multiDigitTimerRef = useRef<number | null>(null);
-  const toastTimerRef = useRef<number | null>(null);
-
-  const rewardCount = getTotalRewardCount(progress);
-  const hasUnseenReward = rewardCount > progress.seenRewardCount;
-  const dailyCompletedToday = progress.dailyCompletedDates.includes(todayKey);
-
-  // Sync persisted progress & active theme
-  useEffect(() => {
-    saveProgress(progress);
-    soundEngine.setEnabled(progress.soundEnabled);
-    document.documentElement.setAttribute("data-theme", progress.theme);
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) {
-      meta.setAttribute("content", THEME_META_COLORS[progress.theme]);
-    }
-  }, [progress]);
 
   // Unlock iOS Safari AudioContext & pre-decode logo clip on first user touch/click
   useEffect(() => {
@@ -174,32 +155,7 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => {
-    return () => {
-      clearTimers();
-      if (toastTimerRef.current !== null) {
-        window.clearTimeout(toastTimerRef.current);
-      }
-    };
-  }, [clearTimers]);
-
-  const showStampToastIfUnlocked = useCallback(
-    (prevRewardCount: number, nextRewardCount: number) => {
-      const newlyUnlocked = STAMPS.find(
-        (s) => s.requiredRewards > prevRewardCount && s.requiredRewards <= nextRewardCount,
-      );
-      if (!newlyUnlocked) return;
-      setUnlockedToast(newlyUnlocked);
-      if (toastTimerRef.current !== null) {
-        window.clearTimeout(toastTimerRef.current);
-      }
-      toastTimerRef.current = window.setTimeout(() => {
-        setUnlockedToast(null);
-        toastTimerRef.current = null;
-      }, 4200);
-    },
-    [],
-  );
+  useEffect(() => clearTimers, [clearTimers]);
 
   const load2x2Puzzle = useCallback(
     (nextPuzzle: Puzzle, resetSetStars = false) => {
@@ -294,14 +250,14 @@ export default function App() {
       if (nextTarget === targetSum) return;
       soundEngine.playTap();
       triggerHaptic("tap");
-      setProgress((prev) => ({ ...prev, targetSum: nextTarget }));
+      setTargetSum(nextTarget);
       if (mode === "classic" || mode === "two-blank") {
         const missingCount = mode === "two-blank" ? 2 : 1;
         const next = generatePuzzle({ targetSum: nextTarget, missingCount });
         load2x2Puzzle(next, false);
       }
     },
-    [load2x2Puzzle, mode, targetSum],
+    [load2x2Puzzle, mode, setTargetSum, targetSum],
   );
 
   const getBoardOrigin = useCallback(() => {
@@ -333,26 +289,11 @@ export default function App() {
         setStarsInSet(nextStarsInSet);
       }
 
-      setProgress((prev) => {
-        const prevRewards = getTotalRewardCount(prev);
-        const nextDailyDates =
-          justFinishedDaily && !prev.dailyCompletedDates.includes(todayKey)
-            ? [...prev.dailyCompletedDates, todayKey]
-            : prev.dailyCompletedDates;
-
-        const nextProgress: PersistedProgress = {
-          ...prev,
-          totalSolved: prev.totalSolved + 1,
-          bestStreak: Math.max(prev.bestStreak, nextStreak),
-          setsCompleted: justCompletedSet ? prev.setsCompleted + 1 : prev.setsCompleted,
-          dailyCompletedDates: nextDailyDates,
-        };
-
-        const nextRewards = getTotalRewardCount(nextProgress);
-        if (nextRewards > prevRewards) {
-          showStampToastIfUnlocked(prevRewards, nextRewards);
-        }
-        return nextProgress;
+      recordSolve({
+        kind: isDaily ? "daily" : "2x2",
+        nextStreak,
+        completedSet: justCompletedSet,
+        dailyDateKey: justFinishedDaily ? todayKey : undefined,
       });
 
       const milestone = justFinishedDaily
@@ -391,16 +332,7 @@ export default function App() {
         }
       }, delayMs);
     },
-    [
-      dailyIndex,
-      getBoardOrigin,
-      mode,
-      showStampToastIfUnlocked,
-      starsInSet,
-      startNext2x2,
-      streak,
-      todayKey,
-    ],
+    [dailyIndex, getBoardOrigin, mode, recordSolve, starsInSet, startNext2x2, streak, todayKey],
   );
 
   const handleSelect2x2Number = useCallback(
@@ -579,20 +511,7 @@ export default function App() {
         const nextStreak = streak + 1;
         setStreak(nextStreak);
 
-        setProgress((prev) => {
-          const prevRewards = getTotalRewardCount(prev);
-          const nextProgress: PersistedProgress = {
-            ...prev,
-            totalSolved: prev.totalSolved + 1,
-            bestStreak: Math.max(prev.bestStreak, nextStreak),
-            sudoku4x4Solved: prev.sudoku4x4Solved + 1,
-          };
-          const nextRewards = getTotalRewardCount(nextProgress);
-          if (nextRewards > prevRewards) {
-            showStampToastIfUnlocked(prevRewards, nextRewards);
-          }
-          return nextProgress;
-        });
+        recordSolve({ kind: "sudoku-4x4", nextStreak });
 
         setFeedback({
           kind: "solved",
@@ -620,14 +539,7 @@ export default function App() {
       const nextEmpty = firstEmptySudokuCell(nextBoard);
       setSudokuSelected(nextEmpty);
     },
-    [
-      showStampToastIfUnlocked,
-      streak,
-      sudokuBoard,
-      sudokuPuzzle.givens,
-      sudokuSelected,
-      sudokuSolved,
-    ],
+    [recordSolve, streak, sudokuBoard, sudokuPuzzle.givens, sudokuSelected, sudokuSolved],
   );
 
   const handleEraseSudokuCell = useCallback(() => {
@@ -693,34 +605,21 @@ export default function App() {
 
   const handleToggleSound = useCallback(() => {
     triggerHaptic("tap");
-    setProgress((prev) => {
-      const nextEnabled = !prev.soundEnabled;
-      soundEngine.setEnabled(nextEnabled);
-      if (nextEnabled) {
-        soundEngine.playTap();
-      } else {
-        setLogoPlaying(false);
-      }
-      return { ...prev, soundEnabled: nextEnabled };
-    });
-  }, []);
+    toggleSound(() => setLogoPlaying(false));
+  }, [toggleSound]);
 
   const handleTogglePips = useCallback(() => {
     soundEngine.playTap();
     triggerHaptic("tap");
-    setProgress((prev) => ({ ...prev, pipsEnabled: !prev.pipsEnabled }));
-  }, []);
+    togglePips();
+  }, [togglePips]);
 
   const handleOpenShelf = useCallback(() => {
     soundEngine.playTap();
     triggerHaptic("tap");
     setShelfOpen(true);
-    setUnlockedToast(null);
-    setProgress((prev) => ({
-      ...prev,
-      seenRewardCount: getTotalRewardCount(prev),
-    }));
-  }, []);
+    markRewardsSeen();
+  }, [markRewardsSeen]);
 
   const handleLogoClick = useCallback(() => {
     triggerHaptic("tap");
@@ -733,17 +632,23 @@ export default function App() {
     }
   }, []);
 
-  const handleSelectTheme = useCallback((theme: ThemeId) => {
-    soundEngine.playTap();
-    triggerHaptic("tap");
-    setProgress((prev) => ({ ...prev, theme }));
-  }, []);
+  const handleSelectTheme = useCallback(
+    (theme: ThemeId) => {
+      soundEngine.playTap();
+      triggerHaptic("tap");
+      setTheme(theme);
+    },
+    [setTheme],
+  );
 
-  const handlePinStamp = useCallback((stampId: StampId | null) => {
-    soundEngine.playTap();
-    triggerHaptic("tap");
-    setProgress((prev) => ({ ...prev, pinnedStampId: stampId }));
-  }, []);
+  const handlePinStamp = useCallback(
+    (stampId: StampId | null) => {
+      soundEngine.playTap();
+      triggerHaptic("tap");
+      pinStamp(stampId);
+    },
+    [pinStamp],
+  );
 
   // Keyboard support across all modes
   useEffect(() => {
