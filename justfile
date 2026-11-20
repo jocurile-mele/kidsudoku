@@ -62,6 +62,11 @@ check:
     pnpm exec vp check
     pnpm exec vp test
 
+# Verify live UI end-to-end in headless Playwright
+[group('verify')]
+verify-ui cmd="all" url="http://localhost:5173/":
+    node scripts/control-kidsudoku.mjs "{{cmd}}" --url "{{url}}"
+
 # Build for production (vp build)
 [group('build')]
 build:
