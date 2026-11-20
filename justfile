@@ -19,6 +19,12 @@ dev:
 preview:
     pnpm exec vp preview
 
+# Enable versioned git hooks (.githooks/pre-commit)
+[group('dev')]
+setup-hooks:
+    git config core.hooksPath .githooks
+    @echo "Git hooks enabled (core.hooksPath=.githooks)"
+
 # Format files with Oxfmt (vp fmt)
 [group('verify')]
 fmt:

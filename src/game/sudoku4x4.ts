@@ -8,7 +8,7 @@ export interface Sudoku4x4Puzzle {
 
 export interface SudokuConflict {
   digit: number;
-  reason: 'row' | 'col' | 'box';
+  reason: "row" | "col" | "box";
   conflictingIndices: number[];
   message: string;
 }
@@ -45,11 +45,7 @@ function shuffle<T>(items: T[], rng: () => number): T[] {
   return arr;
 }
 
-function isValidPlacement(
-  grid: Array<number | null>,
-  index: number,
-  digit: number,
-): boolean {
+function isValidPlacement(grid: Array<number | null>, index: number, digit: number): boolean {
   const row = getRow(index);
   const col = getCol(index);
   const box = getBoxIndex(index);
@@ -88,10 +84,7 @@ function generateFullSolution(rng: () => number): number[] {
   return grid as number[];
 }
 
-export function countSolutions(
-  grid: Array<number | null>,
-  limit = 2,
-): number {
+export function countSolutions(grid: Array<number | null>, limit = 2): number {
   const work = [...grid];
   let count = 0;
 
@@ -174,13 +167,11 @@ export function checkSudokuConflict(
   const col = getCol(index);
   const box = getBoxIndex(index);
 
-  const boxConflicts = BOX_CELLS[box].filter(
-    (idx) => idx !== index && board[idx] === digit,
-  );
+  const boxConflicts = BOX_CELLS[box].filter((idx) => idx !== index && board[idx] === digit);
   if (boxConflicts.length > 0) {
     return {
       digit,
-      reason: 'box',
+      reason: "box",
       conflictingIndices: boxConflicts,
       message: `There is already a ${digit} in this 2×2 square`,
     };
@@ -194,7 +185,7 @@ export function checkSudokuConflict(
   if (rowConflicts.length > 0) {
     return {
       digit,
-      reason: 'row',
+      reason: "row",
       conflictingIndices: rowConflicts,
       message: `There is already a ${digit} in this row`,
     };
@@ -208,7 +199,7 @@ export function checkSudokuConflict(
   if (colConflicts.length > 0) {
     return {
       digit,
-      reason: 'col',
+      reason: "col",
       conflictingIndices: colConflicts,
       message: `There is already a ${digit} in this column`,
     };
@@ -217,10 +208,7 @@ export function checkSudokuConflict(
   return null;
 }
 
-export function isBoxComplete(
-  board: Array<number | null>,
-  boxIndex: number,
-): boolean {
+export function isBoxComplete(board: Array<number | null>, boxIndex: number): boolean {
   const vals = BOX_CELLS[boxIndex].map((idx) => board[idx]);
   if (vals.some((v) => v === null)) return false;
   return new Set(vals).size === 4;

@@ -22,7 +22,7 @@ export interface Puzzle {
   givenEntries: Array<{ index: QuadrantIndex; value: number }>;
 }
 
-export type GuessStatus = 'correct' | 'too-high' | 'too-low';
+export type GuessStatus = "correct" | "too-high" | "too-low";
 
 export interface GuessEvaluation {
   status: GuessStatus;
@@ -64,8 +64,8 @@ function randomInt(maxExclusive: number, rng: () => number): number {
   return Math.min(maxExclusive - 1, Math.floor(rng() * maxExclusive));
 }
 
-function cellsSignature(cells: Puzzle['cells']): string {
-  return cells.map((c) => (c === null ? '?' : String(c))).join(',');
+function cellsSignature(cells: Puzzle["cells"]): string {
+  return cells.map((c) => (c === null ? "?" : String(c))).join(",");
 }
 
 export interface GeneratePuzzleOptions {
@@ -84,16 +84,16 @@ export function generatePuzzle(
   let missingCount: MissingCount = 1;
   let previous: Puzzle | undefined;
   let rng: () => number = legacyRng ?? Math.random;
-  let idPrefix = 'puzzle';
+  let idPrefix = "puzzle";
 
-  if (previousOrOptions && 'cells' in previousOrOptions) {
+  if (previousOrOptions && "cells" in previousOrOptions) {
     previous = previousOrOptions;
   } else if (previousOrOptions) {
     targetSum = previousOrOptions.targetSum ?? 10;
     missingCount = previousOrOptions.missingCount ?? 1;
     previous = previousOrOptions.previous;
     rng = previousOrOptions.rng ?? Math.random;
-    idPrefix = previousOrOptions.idPrefix ?? 'puzzle';
+    idPrefix = previousOrOptions.idPrefix ?? "puzzle";
   }
 
   const compositions = getCompositions(targetSum);
@@ -115,15 +115,14 @@ export function generatePuzzle(
     if (!previous) break;
 
     const missingSet = new Set<number>(missingIndices);
-    const candidateCells: Puzzle['cells'] = [
+    const candidateCells: Puzzle["cells"] = [
       missingSet.has(0) ? null : chosenTuple[0],
       missingSet.has(1) ? null : chosenTuple[1],
       missingSet.has(2) ? null : chosenTuple[2],
       missingSet.has(3) ? null : chosenTuple[3],
     ];
 
-    const sameBoard =
-      cellsSignature(candidateCells) === cellsSignature(previous.cells);
+    const sameBoard = cellsSignature(candidateCells) === cellsSignature(previous.cells);
     const sameSpotAndAnswer =
       missingCount === 1 &&
       previous.missingCount === 1 &&
@@ -136,7 +135,7 @@ export function generatePuzzle(
   }
 
   const missingSet = new Set<number>(missingIndices);
-  const cells: Puzzle['cells'] = [
+  const cells: Puzzle["cells"] = [
     missingSet.has(0) ? null : chosenTuple[0],
     missingSet.has(1) ? null : chosenTuple[1],
     missingSet.has(2) ? null : chosenTuple[2],
@@ -154,8 +153,7 @@ export function generatePuzzle(
   }
 
   const neededSum = targetSum - givenSum;
-  const answer =
-    missingCount === 1 ? chosenTuple[missingIndices[0]] : neededSum;
+  const answer = missingCount === 1 ? chosenTuple[missingIndices[0]] : neededSum;
 
   return {
     id: `${idPrefix}-${Date.now()}-${nextPuzzleCounter++}`,
@@ -176,11 +174,11 @@ export function evaluateGuess(puzzle: Puzzle, guess: number): GuessEvaluation {
   const diff = total - puzzle.targetSum;
 
   if (diff === 0) {
-    return { status: 'correct', guess, total, diff };
+    return { status: "correct", guess, total, diff };
   }
 
   return {
-    status: diff > 0 ? 'too-high' : 'too-low',
+    status: diff > 0 ? "too-high" : "too-low",
     guess,
     total,
     diff,
@@ -201,10 +199,10 @@ export function evaluateMultiGuess(
   const total = puzzle.givenSum + placedSum;
   const diff = total - puzzle.targetSum;
   if (diff === 0) {
-    return { status: 'correct', guess: placedSum, total, diff };
+    return { status: "correct", guess: placedSum, total, diff };
   }
   return {
-    status: diff > 0 ? 'too-high' : 'too-low',
+    status: diff > 0 ? "too-high" : "too-low",
     guess: placedSum,
     total,
     diff,
@@ -262,8 +260,8 @@ export function createSeededRng(seedStr: string): () => number {
 
 export function getTodayDateKey(now: Date = new Date()): string {
   const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
 
@@ -288,12 +286,12 @@ export function generateDailyPuzzles(dateKey: string): Puzzle[] {
 }
 
 const GENERAL_PRAISE = [
-  'Spot on!',
-  'Nice thinking!',
-  'Well done!',
-  'Great match!',
-  'Clever!',
-  'Lovely!',
+  "Spot on!",
+  "Nice thinking!",
+  "Well done!",
+  "Great match!",
+  "Clever!",
+  "Lovely!",
 ];
 
 export function getCelebrationMessage(
@@ -303,7 +301,7 @@ export function getCelebrationMessage(
   targetSum: TargetSum = 10,
 ): string {
   if (justCompletedSet) {
-    return 'Set complete! 5 stars earned!';
+    return "Set complete! 5 stars earned!";
   }
   if (streak > 0 && streak % 10 === 0) {
     return `${streak} in a row — remarkable!`;
@@ -312,7 +310,7 @@ export function getCelebrationMessage(
     return `${streak} in a row!`;
   }
   if (attempts === 1 && streak >= 2) {
-    return 'First try — sharp!';
+    return "First try — sharp!";
   }
   if (streak % 3 === 1) {
     return `Makes ${targetSum}!`;
@@ -321,7 +319,7 @@ export function getCelebrationMessage(
 }
 
 export function getWrongFeedback(evaluation: GuessEvaluation): string {
-  if (evaluation.status === 'too-high') {
+  if (evaluation.status === "too-high") {
     return `That makes ${evaluation.total} — try a smaller number`;
   }
   return `That makes ${evaluation.total} — try a bigger number`;

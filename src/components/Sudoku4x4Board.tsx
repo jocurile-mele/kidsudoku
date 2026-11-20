@@ -1,6 +1,6 @@
-import { type RefObject } from 'react';
-import { motion } from 'motion/react';
-import { Sparkles } from 'lucide-react';
+import { type RefObject } from "react";
+import { motion } from "motion/react";
+import { Sparkles } from "lucide-react";
 import {
   getBoxCells,
   getBoxIndex,
@@ -8,7 +8,7 @@ import {
   getRow,
   isBoxComplete,
   type Sudoku4x4Puzzle,
-} from '../game/sudoku4x4';
+} from "../game/sudoku4x4";
 
 interface Sudoku4x4BoardProps {
   puzzle: Sudoku4x4Puzzle;
@@ -45,9 +45,7 @@ export function Sudoku4x4Board({
           animate={solved ? { scale: [1, 1.06, 1] } : { scale: 1 }}
           transition={{ duration: 0.35 }}
           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-bold border transition-colors ${
-            solved
-              ? 'bg-sage-wash border-sage/50 text-sage-deep'
-              : 'cs-surface text-ink-soft'
+            solved ? "bg-sage-wash border-sage/50 text-sage-deep" : "cs-surface text-ink-soft"
           }`}
         >
           {solved ? (
@@ -67,7 +65,7 @@ export function Sudoku4x4Board({
         role="grid"
         aria-label="4 by 4 KidSudoku board"
         className={`board-tray p-2.5 sm:p-3 rounded-[26px] border transition-colors duration-300 w-[clamp(248px,76vw,312px)] h-[clamp(248px,76vw,312px)] [@media(max-height:700px)]:w-[238px] [@media(max-height:700px)]:h-[238px] [@media(orientation:landscape)_and_(max-height:520px)]:w-[216px] [@media(orientation:landscape)_and_(max-height:520px)]:h-[216px] grid grid-cols-2 grid-rows-2 gap-2.5 sm:gap-3 ${
-          solved ? 'border-sage/70 ring-4 ring-sage/15' : ''
+          solved ? "border-sage/70 ring-4 ring-sage/15" : ""
         }`}
       >
         {[0, 1, 2, 3].map((boxIndex) => {
@@ -79,8 +77,8 @@ export function Sudoku4x4Board({
               key={boxIndex}
               className={`grid grid-cols-2 grid-rows-2 gap-1.5 p-1.5 rounded-2xl border transition-colors duration-300 ${
                 boxDone
-                  ? 'bg-sage-wash/55 border-sage/45'
-                  : 'bg-black/[0.03] border-[var(--cs-border)]/70'
+                  ? "bg-sage-wash/55 border-sage/45"
+                  : "bg-black/[0.03] border-[var(--cs-border)]/70"
               }`}
             >
               {cellIndices.map((cellIndex) => {
@@ -110,7 +108,7 @@ export function Sudoku4x4Board({
                     disabled={isGiven && !solved}
                     role="gridcell"
                     aria-label={`Row ${getRow(cellIndex) + 1} column ${getCol(cellIndex) + 1}: ${
-                      value !== null ? value : 'empty'
+                      value !== null ? value : "empty"
                     }`}
                     animate={
                       isConflict
@@ -122,31 +120,31 @@ export function Sudoku4x4Board({
                     transition={
                       isConflict
                         ? { duration: 0.36 }
-                        : { type: 'spring', stiffness: 460, damping: 24 }
+                        : { type: "spring", stiffness: 460, damping: 24 }
                     }
                     className={`rounded-xl flex items-center justify-center font-display text-2xl sm:text-[28px] font-bold leading-none transition-colors select-none focus-visible:outline-2 focus-visible:outline-amber-warm ${
-                      isGiven ? 'cursor-default' : solved ? 'cursor-default' : 'cursor-pointer'
+                      isGiven ? "cursor-default" : solved ? "cursor-default" : "cursor-pointer"
                     } ${
                       isConflict
-                        ? 'tile-wrong border-2 border-coral text-coral-deep'
+                        ? "tile-wrong border-2 border-coral text-coral-deep"
                         : solved
-                          ? 'tile-solved border border-sage/60 text-sage-deep'
+                          ? "tile-solved border border-sage/60 text-sage-deep"
                           : isDropHover
-                            ? 'tile-missing border-2 border-amber-warm ring-2 ring-amber-warm/35 text-amber-deep'
+                            ? "tile-missing border-2 border-amber-warm ring-2 ring-amber-warm/35 text-amber-deep"
                             : isSelected
-                              ? 'tile-missing border-2 border-dashed border-amber-warm ring-2 ring-amber-warm/25 text-amber-deep'
+                              ? "tile-missing border-2 border-dashed border-amber-warm ring-2 ring-amber-warm/25 text-amber-deep"
                               : isGiven
                                 ? `tile-given border border-[var(--cs-border)] text-ink ${
-                                    isRelated ? 'brightness-[0.97]' : ''
+                                    isRelated ? "brightness-[0.97]" : ""
                                   }`
                                 : value !== null
-                                  ? 'tile-given border border-sage/55 text-sage-deep'
+                                  ? "tile-given border border-sage/55 text-sage-deep"
                                   : isRelated
-                                    ? 'bg-amber-wash/45 border border-dashed border-amber-warm/40 text-amber-warm/50'
-                                    : 'cs-surface border border-dashed border-[var(--cs-border-strong)] text-ink-soft/45'
+                                    ? "bg-amber-wash/45 border border-dashed border-amber-warm/40 text-amber-warm/50"
+                                    : "cs-surface border border-dashed border-[var(--cs-border-strong)] text-ink-soft/45"
                     }`}
                   >
-                    {value !== null ? value : isSelected ? '?' : ''}
+                    {value !== null ? value : isSelected ? "?" : ""}
                   </motion.button>
                 );
               })}

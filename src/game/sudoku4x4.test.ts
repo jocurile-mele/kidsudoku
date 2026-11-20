@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vite-plus/test';
+import { describe, expect, it } from "vite-plus/test";
 import {
   checkSudokuConflict,
   countSolutions,
@@ -7,10 +7,10 @@ import {
   getSudokuHint,
   isBoxComplete,
   isSudokuSolved,
-} from './sudoku4x4';
+} from "./sudoku4x4";
 
-describe('4x4 KidSudoku engine', () => {
-  it('generates valid unique-solution 4x4 puzzles where every row, col, and 2x2 box sums to 10', () => {
+describe("4x4 KidSudoku engine", () => {
+  it("generates valid unique-solution 4x4 puzzles where every row, col, and 2x2 box sums to 10", () => {
     for (let i = 0; i < 30; i++) {
       const puzzle = generateSudoku4x4();
       expect(puzzle.solution).toHaveLength(16);
@@ -38,7 +38,7 @@ describe('4x4 KidSudoku engine', () => {
     }
   });
 
-  it('detects box, row, and column conflicts and provides valid hints', () => {
+  it("detects box, row, and column conflicts and provides valid hints", () => {
     const puzzle = generateSudoku4x4();
     const board = [...puzzle.givens];
     const hint = getSudokuHint(puzzle, board);

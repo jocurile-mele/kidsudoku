@@ -1,13 +1,7 @@
-import { AnimatePresence, motion } from 'motion/react';
-import { Check, Lock, Palette, Pin, Sparkles, X } from 'lucide-react';
-import {
-  STAMPS,
-  THEMES,
-  isThemeUnlocked,
-  type StampId,
-  type ThemeId,
-} from '../game/stamps';
-import { StampIcon } from './StampIcon';
+import { AnimatePresence, motion } from "motion/react";
+import { Check, Lock, Palette, Pin, Sparkles, X } from "lucide-react";
+import { STAMPS, THEMES, isThemeUnlocked, type StampId, type ThemeId } from "../game/stamps";
+import { StampIcon } from "./StampIcon";
 
 interface StampShelfModalProps {
   open: boolean;
@@ -50,16 +44,13 @@ export function StampShelfModal({
             initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+            transition={{ type: "spring", stiffness: 420, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-md max-h-[86dvh] overflow-y-auto rounded-3xl cs-surface border p-5 sm:p-6 shadow-[0_24px_54px_-16px_rgba(0,0,0,0.34)]"
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2
-                  id="shelf-title"
-                  className="font-display text-2xl font-bold text-ink"
-                >
+                <h2 id="shelf-title" className="font-display text-2xl font-bold text-ink">
                   Stamp Shelf &amp; Themes
                 </h2>
                 <p className="text-xs font-semibold text-ink-soft">
@@ -98,10 +89,10 @@ export function StampShelfModal({
                       onClick={() => onSelectTheme(theme.id)}
                       className={`relative flex flex-col items-start gap-2 p-2.5 rounded-2xl border text-left cs-press-in ${
                         selected
-                          ? 'border-sage ring-2 ring-sage/25 bg-sage-wash/60 cursor-pointer'
+                          ? "border-sage ring-2 ring-sage/25 bg-sage-wash/60 cursor-pointer"
                           : unlocked
-                            ? 'cs-surface hover:border-amber-warm/60 cursor-pointer'
-                            : 'cs-muted-pill opacity-65 cursor-default'
+                            ? "cs-surface hover:border-amber-warm/60 cursor-pointer"
+                            : "cs-muted-pill opacity-65 cursor-default"
                       }`}
                     >
                       <div className="flex items-center gap-1">
@@ -123,7 +114,7 @@ export function StampShelfModal({
                               <Check className="w-3 h-3" /> Active
                             </span>
                           ) : unlocked ? (
-                            'Tap to use'
+                            "Tap to use"
                           ) : (
                             <span className="inline-flex items-center gap-0.5">
                               <Lock className="w-2.5 h-2.5" /> {theme.requiredSolved} ★
@@ -168,15 +159,15 @@ export function StampShelfModal({
                             ? `${stamp.name} (Pinned — tap to unpin)`
                             : `Tap to pin ${stamp.name}`
                           : `Unlocks after ${stamp.requiredRewards} completed ${
-                              stamp.requiredRewards === 1 ? 'set' : 'sets'
+                              stamp.requiredRewards === 1 ? "set" : "sets"
                             }`
                       }
                       className={`relative flex flex-col items-center justify-center gap-1 py-2.5 px-1.5 rounded-2xl border cs-press-in ${
                         pinned
-                          ? 'border-amber-warm ring-2 ring-amber-warm/30 bg-amber-wash/75 cursor-pointer'
+                          ? "border-amber-warm ring-2 ring-amber-warm/30 bg-amber-wash/75 cursor-pointer"
                           : unlocked
-                            ? 'cs-surface hover:border-amber-warm/60 cursor-pointer'
-                            : 'cs-muted-pill opacity-55 cursor-default'
+                            ? "cs-surface hover:border-amber-warm/60 cursor-pointer"
+                            : "cs-muted-pill opacity-55 cursor-default"
                       }`}
                     >
                       {pinned && (
@@ -195,9 +186,9 @@ export function StampShelfModal({
                                 borderColor: `${stamp.accent}33`,
                               }
                             : {
-                                backgroundColor: 'transparent',
-                                color: 'var(--cs-ink-muted)',
-                                borderColor: 'var(--cs-border)',
+                                backgroundColor: "transparent",
+                                color: "var(--cs-ink-muted)",
+                                borderColor: "var(--cs-border)",
                               }
                         }
                       >

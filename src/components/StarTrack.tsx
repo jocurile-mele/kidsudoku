@@ -1,8 +1,8 @@
-import { motion } from 'motion/react';
-import { Award, CalendarDays, Star } from 'lucide-react';
-import { SET_SIZE } from '../game/puzzle';
-import { STAMPS, type StampId } from '../game/stamps';
-import { StampIcon } from './StampIcon';
+import { motion } from "motion/react";
+import { Award, CalendarDays, Star } from "lucide-react";
+import { SET_SIZE } from "../game/puzzle";
+import { STAMPS, type StampId } from "../game/stamps";
+import { StampIcon } from "./StampIcon";
 
 interface StarTrackProps {
   starsInSet: number;
@@ -19,9 +19,7 @@ export function StarTrack({
   onOpenShelf,
   dailyLabel = null,
 }: StarTrackProps) {
-  const pinnedStamp = pinnedStampId
-    ? STAMPS.find((s) => s.id === pinnedStampId) ?? null
-    : null;
+  const pinnedStamp = pinnedStampId ? (STAMPS.find((s) => s.id === pinnedStampId) ?? null) : null;
 
   return (
     <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -43,18 +41,16 @@ export function StarTrack({
               key={idx}
               initial={false}
               animate={
-                filled
-                  ? { scale: [0.65, 1.25, 1], rotate: [-14, 6, 0] }
-                  : { scale: 1, rotate: 0 }
+                filled ? { scale: [0.65, 1.25, 1], rotate: [-14, 6, 0] } : { scale: 1, rotate: 0 }
               }
-              transition={{ type: 'spring', stiffness: 420, damping: 18 }}
+              transition={{ type: "spring", stiffness: 420, damping: 18 }}
               className="flex items-center justify-center"
             >
               <Star
                 className={`w-4 h-4 transition-colors duration-200 ${
                   filled
-                    ? 'text-amber-warm fill-amber-warm drop-shadow-[0_1px_2px_rgba(230,162,53,0.35)]'
-                    : 'text-[var(--cs-ink-muted)]/60 fill-transparent'
+                    ? "text-amber-warm fill-amber-warm drop-shadow-[0_1px_2px_rgba(230,162,53,0.35)]"
+                    : "text-[var(--cs-ink-muted)]/60 fill-transparent"
                 }`}
               />
             </motion.div>
@@ -67,13 +63,13 @@ export function StarTrack({
           key={`sets-${setsCompleted}`}
           initial={{ scale: 0.85, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sage-wash border border-sage/45 text-sage-deep text-xs font-bold"
-          title={`${setsCompleted} ${setsCompleted === 1 ? 'set' : 'sets'} completed`}
+          title={`${setsCompleted} ${setsCompleted === 1 ? "set" : "sets"} completed`}
         >
           <Award className="w-3.5 h-3.5" />
           <span className="font-display">
-            {setsCompleted} {setsCompleted === 1 ? 'set' : 'sets'}
+            {setsCompleted} {setsCompleted === 1 ? "set" : "sets"}
           </span>
         </motion.div>
       )}

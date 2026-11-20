@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vite-plus/test';
+import { describe, expect, it } from "vite-plus/test";
 import {
   ALL_COMPOSITIONS,
   DAILY_SIZE,
@@ -12,10 +12,10 @@ import {
   getWrongFeedback,
   type Puzzle,
   type TargetSum,
-} from './puzzle';
+} from "./puzzle";
 
-describe('puzzle generation & rules', () => {
-  it('enumerates exact weak compositions for 5, 10, and 20', () => {
+describe("puzzle generation & rules", () => {
+  it("enumerates exact weak compositions for 5, 10, and 20", () => {
     expect(getCompositions(5)).toHaveLength(56);
     expect(ALL_COMPOSITIONS).toHaveLength(286);
     expect(getCompositions(20)).toHaveLength(1771);
@@ -26,7 +26,7 @@ describe('puzzle generation & rules', () => {
     }
   });
 
-  it('always produces valid 1-missing puzzles across target sums 5, 10, and 20', () => {
+  it("always produces valid 1-missing puzzles across target sums 5, 10, and 20", () => {
     for (const targetSum of [5, 10, 20] as TargetSum[]) {
       let sawZero = false;
       let sawRepeat = false;
@@ -56,7 +56,7 @@ describe('puzzle generation & rules', () => {
     }
   });
 
-  it('supports open-ended 2-missing puzzles where any valid pair wins', () => {
+  it("supports open-ended 2-missing puzzles where any valid pair wins", () => {
     const puzzle = generatePuzzle({ targetSum: 10, missingCount: 2 });
     expect(puzzle.missingCount).toBe(2);
     expect(puzzle.missingIndices).toHaveLength(2);
@@ -68,31 +68,31 @@ describe('puzzle generation & rules', () => {
 
     const rem = puzzle.neededSum;
     const validEval = evaluateMultiGuess(puzzle, { [idxA]: 0, [idxB]: rem });
-    expect(validEval?.status).toBe('correct');
+    expect(validEval?.status).toBe("correct");
     expect(validEval?.total).toBe(10);
 
     if (rem >= 1) {
       const altEval = evaluateMultiGuess(puzzle, { [idxA]: 1, [idxB]: rem - 1 });
-      expect(altEval?.status).toBe('correct');
+      expect(altEval?.status).toBe("correct");
     }
 
     const highEval = evaluateMultiGuess(puzzle, { [idxA]: rem + 1, [idxB]: 0 });
-    expect(highEval?.status).toBe('too-high');
+    expect(highEval?.status).toBe("too-high");
   });
 
-  it('generates deterministic Daily 5-Square Challenge sets per date', () => {
-    const runA = generateDailyPuzzles('2026-04-12');
-    const runB = generateDailyPuzzles('2026-04-12');
-    const otherDay = generateDailyPuzzles('2026-04-13');
+  it("generates deterministic Daily 5-Square Challenge sets per date", () => {
+    const runA = generateDailyPuzzles("2026-04-12");
+    const runB = generateDailyPuzzles("2026-04-12");
+    const otherDay = generateDailyPuzzles("2026-04-13");
 
     expect(runA).toHaveLength(DAILY_SIZE);
     expect(runA.map((p) => p.cells)).toEqual(runB.map((p) => p.cells));
     expect(runA.map((p) => p.cells)).not.toEqual(otherDay.map((p) => p.cells));
   });
 
-  it('evaluates guesses accurately including 0 and target boundaries', () => {
+  it("evaluates guesses accurately including 0 and target boundaries", () => {
     const puzzleZeroAnswer: Puzzle = {
-      id: 'p1',
+      id: "p1",
       targetSum: 10,
       missingCount: 1,
       cells: [4, 3, 3, null],
@@ -108,13 +108,13 @@ describe('puzzle generation & rules', () => {
       ],
     };
 
-    expect(evaluateGuess(puzzleZeroAnswer, 0).status).toBe('correct');
+    expect(evaluateGuess(puzzleZeroAnswer, 0).status).toBe("correct");
     const highEval = evaluateGuess(puzzleZeroAnswer, 2);
-    expect(highEval.status).toBe('too-high');
-    expect(getWrongFeedback(highEval)).toContain('12');
+    expect(highEval.status).toBe("too-high");
+    expect(getWrongFeedback(highEval)).toContain("12");
   });
 
-  it('returns 3 unique sorted hint choices including the answer at edges', () => {
+  it("returns 3 unique sorted hint choices including the answer at edges", () => {
     for (const answer of [0, 1, 5, 9, 10]) {
       const puzzle: Puzzle = {
         id: `edge-${answer}`,

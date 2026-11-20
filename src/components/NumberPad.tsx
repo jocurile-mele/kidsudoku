@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { motion } from 'motion/react';
-import { Eraser } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
+import { Eraser } from "lucide-react";
 
 interface NumberPadProps {
   digits: readonly number[];
   onSelect: (digit: number) => void;
   onDropOnTarget?: (digit: number, targetIndex: number) => void;
   onHoverDropTarget?: (targetIndex: number | null) => void;
-  dropAttribute?: 'data-drop-quadrant' | 'data-drop-sudoku';
+  dropAttribute?: "data-drop-quadrant" | "data-drop-sudoku";
   triedWrong?: ReadonlySet<number>;
   solved: boolean;
   winningDigits?: ReadonlySet<number>;
@@ -39,7 +39,7 @@ export function NumberPad({
   onSelect,
   onDropOnTarget,
   onHoverDropTarget,
-  dropAttribute = 'data-drop-quadrant',
+  dropAttribute = "data-drop-quadrant",
   triedWrong = new Set<number>(),
   solved,
   winningDigits,
@@ -61,7 +61,7 @@ export function NumberPad({
 
   const findDropTarget = useCallback(
     (clientX: number, clientY: number): number | null => {
-      if (typeof document === 'undefined' || !document.elementsFromPoint) {
+      if (typeof document === "undefined" || !document.elementsFromPoint) {
         return null;
       }
       const els = document.elementsFromPoint(clientX, clientY);
@@ -129,13 +129,13 @@ export function NumberPad({
     const onUp = (e: PointerEvent) => finishPointer(e, false);
     const onCancel = (e: PointerEvent) => finishPointer(e, true);
 
-    window.addEventListener('pointermove', handlePointerMove, { passive: true });
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onCancel);
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
     return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onCancel);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
     };
   }, [findDropTarget, onDropOnTarget, onHoverDropTarget, onSelect]);
 
@@ -144,10 +144,10 @@ export function NumberPad({
   const isFourKey = digits.length === 4;
 
   const keySizeClass = isCompact20
-    ? 'w-[clamp(37px,11.8vw,48px)] h-[clamp(38px,10.5vw,46px)] rounded-xl text-lg sm:text-xl'
+    ? "w-[clamp(37px,11.8vw,48px)] h-[clamp(38px,10.5vw,46px)] rounded-xl text-lg sm:text-xl"
     : isFourKey
-      ? 'w-[62px] h-[58px] sm:w-[68px] sm:h-[64px] rounded-2xl text-2xl sm:text-[28px]'
-      : 'w-[clamp(42px,13.4vw,58px)] h-[clamp(46px,13vw,60px)] [@media(max-height:700px)]:h-[46px] [@media(orientation:landscape)_and_(max-height:520px)]:w-[46px] [@media(orientation:landscape)_and_(max-height:520px)]:h-[44px] [@media(orientation:landscape)_and_(max-height:520px)]:text-xl rounded-2xl text-[22px] sm:text-[26px]';
+      ? "w-[62px] h-[58px] sm:w-[68px] sm:h-[64px] rounded-2xl text-2xl sm:text-[28px]"
+      : "w-[clamp(42px,13.4vw,58px)] h-[clamp(46px,13vw,60px)] [@media(max-height:700px)]:h-[46px] [@media(orientation:landscape)_and_(max-height:520px)]:w-[46px] [@media(orientation:landscape)_and_(max-height:520px)]:h-[44px] [@media(orientation:landscape)_and_(max-height:520px)]:text-xl rounded-2xl text-[22px] sm:text-[26px]";
 
   const renderKey = (digit: number) => {
     const isTriedWrong = triedWrong.has(digit);
@@ -158,17 +158,17 @@ export function NumberPad({
       !solved && !isTriedWrong && hintChoices !== null && !hintChoices.includes(digit);
     const disabled = solved || isTriedWrong;
 
-    let styleClass = 'num-key text-ink';
+    let styleClass = "num-key text-ink";
     if (isWinningKey) {
-      styleClass = 'num-key-correct border-sage text-sage-deep';
+      styleClass = "num-key-correct border-sage text-sage-deep";
     } else if (isTriedWrong) {
-      styleClass = 'num-key-tried text-[var(--cs-ink-muted)] opacity-55';
+      styleClass = "num-key-tried text-[var(--cs-ink-muted)] opacity-55";
     } else if (isHintCandidate) {
-      styleClass = 'num-key-hint border-amber-warm text-amber-deep';
+      styleClass = "num-key-hint border-amber-warm text-amber-deep";
     } else if (isDimmedByHint) {
-      styleClass = 'num-key text-ink opacity-40';
+      styleClass = "num-key text-ink opacity-40";
     } else if (solved) {
-      styleClass = 'num-key text-ink opacity-45';
+      styleClass = "num-key text-ink opacity-45";
     }
 
     return (
@@ -176,7 +176,7 @@ export function NumberPad({
         key={digit}
         type="button"
         disabled={disabled}
-        data-pressed={!disabled && pressedDigit === digit ? 'true' : undefined}
+        data-pressed={!disabled && pressedDigit === digit ? "true" : undefined}
         onPointerDown={(e) => {
           if (disabled || e.button > 0) return;
           setPressedDigit(digit);
@@ -186,7 +186,7 @@ export function NumberPad({
             startY: e.clientY,
             dragging: false,
             pointerId: e.pointerId,
-            isTouch: e.pointerType === 'touch',
+            isTouch: e.pointerType === "touch",
             lastDropIndex: null,
           };
         }}
@@ -203,11 +203,11 @@ export function NumberPad({
               ? { scale: [1, 1.04, 1] }
               : { scale: 1 }
         }
-        transition={{ type: 'spring', stiffness: 650, damping: 28 }}
+        transition={{ type: "spring", stiffness: 650, damping: 28 }}
         aria-label={`Choose ${digit}`}
-        style={{ touchAction: 'none' }}
+        style={{ touchAction: "none" }}
         className={`relative border font-display font-bold flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${keySizeClass} ${
-          disabled ? 'cursor-default' : 'cursor-pointer'
+          disabled ? "cursor-default" : "cursor-pointer"
         } ${styleClass}`}
       >
         {digit}
@@ -219,7 +219,7 @@ export function NumberPad({
     <>
       <div
         className={`w-full max-w-md mx-auto flex flex-col items-center ${
-          isCompact20 ? 'gap-1.5 sm:gap-2' : 'gap-2 sm:gap-3'
+          isCompact20 ? "gap-1.5 sm:gap-2" : "gap-2 sm:gap-3"
         }`}
         role="group"
         aria-label={`Number choices from ${digits[0]} to ${digits[digits.length - 1]}`}
@@ -228,7 +228,7 @@ export function NumberPad({
           <div
             key={rIdx}
             className={`flex items-center justify-center ${
-              isCompact20 ? 'gap-1 sm:gap-1.5' : 'gap-1.5 sm:gap-2.5'
+              isCompact20 ? "gap-1 sm:gap-1.5" : "gap-1.5 sm:gap-2.5"
             }`}
           >
             {row.map(renderKey)}
@@ -238,7 +238,7 @@ export function NumberPad({
                 disabled={solved}
                 onClick={onErase}
                 whileTap={solved ? undefined : { scale: 0.94 }}
-                transition={{ type: 'spring', stiffness: 650, damping: 28 }}
+                transition={{ type: "spring", stiffness: 650, damping: 28 }}
                 aria-label="Clear selected cell"
                 title="Clear selected cell"
                 className="w-[54px] h-[58px] sm:w-[60px] sm:h-[64px] rounded-2xl border num-key text-ink-soft flex items-center justify-center cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
@@ -255,11 +255,11 @@ export function NumberPad({
         <div
           aria-hidden="true"
           style={{
-            position: 'fixed',
+            position: "fixed",
             left: drag.x,
             top: drag.y - (drag.isTouch ? 34 : 8),
-            transform: 'translate(-50%, -50%) scale(1.12) rotate(-3deg)',
-            pointerEvents: 'none',
+            transform: "translate(-50%, -50%) scale(1.12) rotate(-3deg)",
+            pointerEvents: "none",
             zIndex: 60,
           }}
           className="w-14 h-14 rounded-2xl border-2 border-amber-warm num-key-hint font-display text-2xl font-bold text-amber-deep flex items-center justify-center shadow-[0_14px_28px_-6px_rgba(0,0,0,0.28)]"
