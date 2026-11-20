@@ -1,29 +1,47 @@
-import { type RefObject } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { Check, Sparkles } from "lucide-react";
-import { TARGET_SUM, type Puzzle } from "../game/puzzle";
-import { HINT_GROUP_STYLES } from "./TenFrameHint";
+import { type RefObject } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { Check, Sparkles } from 'lucide-react';
+import type { Puzzle, QuadrantIndex, TargetSum } from '../game/puzzle';
+import { HINT_GROUP_STYLES } from './TenFrameHint';
+import { DominoPips } from './DominoPips';
+
+const TARGET_OPTIONS: readonly TargetSum[] = [5, 10, 20];
 
 interface PuzzleBoardProps {
   puzzle: Puzzle;
   solved: boolean;
+  filledSlots: Partial<Record<QuadrantIndex, number>>;
+  activeSlotIndex: QuadrantIndex;
+  onSelectSlot: (index: QuadrantIndex) => void;
   wrongGuess: number | null;
+  wrongSlotIndex: QuadrantIndex | null;
   wrongAttemptKey: number;
   hintLevel: number;
-  pendingTensDigit: boolean;
+  pipsEnabled: boolean;
+  pendingTypedPrefix: string;
+  hoveredDropIndex: number | null;
+  allowTargetSelect: boolean;
+  onChangeTargetSum?: (target: TargetSum) => void;
   boardRef: RefObject<HTMLDivElement | null>;
 }
 
 export function PuzzleBoard({
   puzzle,
   solved,
+  filledSlots,
+  activeSlotIndex,
+  onSelectSlot,
   wrongGuess,
+  wrongSlotIndex,
   wrongAttemptKey,
   hintLevel,
-  pendingTensDigit,
+  pipsEnabled,
+  pendingTypedPrefix,
+  hoveredDropIndex,
+  allowTargetSelect,
+  onChangeTargetSum,
   boardRef,
 }: PuzzleBoardProps) {
-  // Map quadrant index -> hint group color index (0, 1, 2)
   const hintGroupByQuadrant = new Map<number, number>();
   puzzle.givenEntries.forEach((entry, idx) => {
     hintGroupByQuadrant.set(entry.index, idx);
@@ -31,27 +49,55 @@ export function PuzzleBoard({
 
   return (
     <div className="w-full flex flex-col items-center">
-      {/* Subtle rule chip */}
+      {/* Rule chip + inline 5 / 10 / 20 target switcher */}
       <div className="mb-2.5 flex items-center gap-2">
         <motion.div
-          animate={solved ? { scale: [1, 1.07, 1] } : { scale: 1 }}
+          animate={solved ? { scale: [1, 1.06, 1] } : { scale: 1 }}
           transition={{ duration: 0.35 }}
-          className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs sm:text-sm font-bold border transition-colors duration-200 ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-bold border transition-colors duration-200 ${
             solved
-              ? "bg-sage-wash border-[#a9d9c3] text-sage-deep"
-              : "bg-cream/90 border-[#e4dac6] text-ink-soft"
+              ? 'bg-sage-wash border-sage/50 text-sage-deep'
+              : 'cs-surface text-ink-soft'
           }`}
         >
           {solved ? (
             <>
               <Sparkles className="w-3.5 h-3.5 text-sage" />
-              <span>Sum equals {TARGET_SUM}!</span>
+              <span>Sum equals {puzzle.targetSum}!</span>
+            </>
+          ) : allowTargetSelect && onChangeTargetSum ? (
+            <>
+              <span>Sum to</span>
+              <span
+                className="inline-flex items-center gap-0.5 p-0.5 rounded-full cs-muted-pill"
+                role="group"
+                aria-label="Target sum"
+              >
+                {TARGET_OPTIONS.map((t) => {
+                  const active = puzzle.targetSum === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => onChangeTargetSum(t)}
+                      aria-pressed={active}
+                      className={`px-2 py-0.5 rounded-full font-display text-xs sm:text-sm font-bold transition cursor-pointer ${
+                        active
+                          ? 'bg-amber-warm text-white shadow-xs'
+                          : 'text-ink-soft [@media(hover:hover)]:hover:text-ink'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </span>
             </>
           ) : (
             <>
               <span>All 4 squares add up to</span>
-              <span className="font-display text-sm sm:text-base font-bold text-ink bg-[#f4ebda] px-2 py-0.5 rounded-full">
-                {TARGET_SUM}
+              <span className="font-display text-sm sm:text-base font-bold text-ink cs-muted-pill px-2 py-0.5 rounded-full">
+                {puzzle.targetSum}
               </span>
             </>
           )}
@@ -61,24 +107,30 @@ export function PuzzleBoard({
       {/* 2x2 Tactile Square Tray */}
       <div
         ref={boardRef}
-        className={`relative board-tray p-3 sm:p-3.5 rounded-[26px] border transition-colors duration-300 w-[clamp(216px,64vw,276px)] h-[clamp(216px,64vw,276px)] [@media(max-height:700px)]:w-[214px] [@media(max-height:700px)]:h-[214px] [@media(orientation:landscape)_and_(max-height:520px)]:w-[200px] [@media(orientation:landscape)_and_(max-height:520px)]:h-[200px] ${
-          solved ? "border-[#a7d8c1] ring-4 ring-sage/15" : "border-[#dfd3bd]"
+        className={`relative board-tray p-3 sm:p-3.5 rounded-[26px] border transition-colors duration-300 w-[clamp(216px,64vw,276px)] h-[clamp(216px,64vw,276px)] [@media(max-height:700px)]:w-[214px] [@media(max-height:700px)]:h-[214px] [@media(orientation:landscape)_and_(max-height:520px)]:w-[196px] [@media(orientation:landscape)_and_(max-height:520px)]:h-[196px] ${
+          solved ? 'border-sage/70 ring-4 ring-sage/15' : ''
         }`}
         role="grid"
-        aria-label="2 by 2 KidSudoku puzzle square"
+        aria-label={`2 by 2 KidSudoku square summing to ${puzzle.targetSum}`}
       >
         {/* Subtle cross-hair dividers */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-4 flex items-center justify-center"
         >
-          <div className="w-full h-[2px] bg-[#dfd3be]/60 rounded-full" />
+          <div
+            className="w-full h-[2px] rounded-full"
+            style={{ backgroundColor: 'var(--cs-divider)' }}
+          />
         </div>
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-4 flex items-center justify-center"
         >
-          <div className="h-full w-[2px] bg-[#dfd3be]/60 rounded-full" />
+          <div
+            className="h-full w-[2px] rounded-full"
+            style={{ backgroundColor: 'var(--cs-divider)' }}
+          />
         </div>
 
         <AnimatePresence mode="wait">
@@ -90,7 +142,8 @@ export function PuzzleBoard({
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             className="relative z-10 grid grid-cols-2 grid-rows-2 gap-3 sm:gap-4 w-full h-full"
           >
-            {puzzle.cells.map((value, index) => {
+            {puzzle.cells.map((value, rawIndex) => {
+              const index = rawIndex as QuadrantIndex;
               const isMissing = value === null;
               const groupIdx = hintGroupByQuadrant.get(index);
               const hintStyle =
@@ -107,11 +160,7 @@ export function PuzzleBoard({
                     initial={{ opacity: 0, scale: 0.85, y: 8 }}
                     animate={
                       solved
-                        ? {
-                            opacity: 1,
-                            scale: 1,
-                            y: [0, -6, 0],
-                          }
+                        ? { opacity: 1, scale: 1, y: [0, -6, 0] }
                         : { opacity: 1, scale: 1, y: 0 }
                     }
                     transition={
@@ -119,83 +168,119 @@ export function PuzzleBoard({
                         ? {
                             duration: 0.42,
                             delay: index * 0.055,
-                            ease: "easeInOut",
+                            ease: 'easeInOut',
                           }
                         : {
-                            type: "spring",
+                            type: 'spring',
                             stiffness: 420,
                             damping: 24,
                             delay: index * 0.045,
                           }
                     }
-                    className={`relative rounded-[20px] tile-given border flex items-center justify-center select-none transition-colors duration-200 ${
+                    className={`relative rounded-[20px] tile-given border flex flex-col items-center justify-center gap-1 select-none transition-colors duration-200 ${
                       solved
-                        ? "border-[#b8dfcd]"
+                        ? 'border-sage/60'
                         : hintStyle
-                          ? `border-[#e5dac6] ring-2 ${hintStyle.ring}`
-                          : "border-[#eae1cf]"
+                          ? `border-[var(--cs-border)] ring-2 ${hintStyle.ring}`
+                          : 'border-[var(--cs-border)]'
                     }`}
                   >
                     {hintStyle && (
                       <motion.span
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 20 }}
                         aria-hidden="true"
                         className={`absolute top-2.5 left-2.5 w-3 h-3 rounded-full ${hintStyle.dot} shadow-xs`}
                       />
                     )}
-                    <span className="font-display text-5xl sm:text-[56px] font-bold text-ink leading-none">
+                    <span
+                      className={`font-display font-bold text-ink leading-none ${
+                        pipsEnabled
+                          ? 'text-4xl sm:text-[42px]'
+                          : value >= 10
+                            ? 'text-4xl sm:text-5xl'
+                            : 'text-5xl sm:text-[54px]'
+                      }`}
+                    >
                       {value}
                     </span>
+                    {pipsEnabled && (
+                      <DominoPips
+                        value={value}
+                        colorClass={hintStyle ? hintStyle.dot : 'bg-ink/40'}
+                      />
+                    )}
                   </motion.div>
                 );
               }
 
-              // Missing quadrant (either awaiting answer, wrong preview wobble, or solved!)
-              const showingWrong = !solved && wrongGuess !== null;
+              // Missing quadrant (supports 1-missing & 2-missing & drag-drop highlight)
+              const placedValue = filledSlots[index];
+              const isActive = !solved && activeSlotIndex === index;
+              const isDropHover = !solved && hoveredDropIndex === index;
+              const showingWrong =
+                !solved && wrongGuess !== null && wrongSlotIndex === index;
+              const displayValue = solved
+                ? placedValue ?? puzzle.answer
+                : showingWrong
+                  ? wrongGuess
+                  : placedValue;
 
               return (
-                <motion.div
-                  key={`${puzzle.id}-missing-${wrongAttemptKey}`}
+                <motion.button
+                  key={`${puzzle.id}-missing-${index}-${showingWrong ? wrongAttemptKey : 0}`}
+                  type="button"
+                  data-drop-quadrant={index}
+                  onClick={() => {
+                    if (!solved) onSelectSlot(index);
+                  }}
                   role="gridcell"
                   aria-label={
                     solved
-                      ? `Quadrant ${index + 1}: solved with ${puzzle.answer}`
-                      : `Quadrant ${index + 1}: missing number`
+                      ? `Quadrant ${index + 1}: solved with ${displayValue}`
+                      : placedValue !== undefined
+                        ? `Quadrant ${index + 1}: placed ${placedValue} (tap to change)`
+                        : `Quadrant ${index + 1}: missing number`
                   }
-                  initial={showingWrong ? { x: 0 } : { opacity: 0, scale: 0.86, y: 8 }}
+                  initial={
+                    showingWrong
+                      ? { x: 0 }
+                      : { opacity: 0, scale: 0.86, y: 8 }
+                  }
                   animate={
                     solved
-                      ? {
-                          opacity: 1,
-                          scale: [0.82, 1.09, 1],
-                          y: 0,
-                        }
+                      ? { opacity: 1, scale: [0.85, 1.08, 1], y: 0 }
                       : showingWrong
-                        ? {
-                            x: [0, -9, 9, -6, 6, -2, 0],
-                          }
-                        : { opacity: 1, scale: 1, y: 0 }
+                        ? { x: [0, -9, 9, -6, 6, -2, 0] }
+                        : isDropHover
+                          ? { opacity: 1, scale: 1.05, y: 0 }
+                          : { opacity: 1, scale: 1, y: 0 }
                   }
                   transition={
                     solved
-                      ? { type: "spring", stiffness: 460, damping: 16 }
+                      ? { type: 'spring', stiffness: 460, damping: 16 }
                       : showingWrong
-                        ? { duration: 0.42, ease: "easeInOut" }
+                        ? { duration: 0.42, ease: 'easeInOut' }
                         : {
-                            type: "spring",
+                            type: 'spring',
                             stiffness: 400,
                             damping: 24,
-                            delay: index * 0.045,
+                            delay: isDropHover ? 0 : index * 0.045,
                           }
                   }
-                  className={`relative rounded-[20px] flex items-center justify-center select-none transition-colors duration-200 ${
+                  className={`relative rounded-[20px] flex flex-col items-center justify-center gap-1 select-none transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
+                    solved ? 'cursor-default' : 'cursor-pointer'
+                  } ${
                     solved
-                      ? "tile-solved border-2 border-sage"
+                      ? 'tile-solved border-2 border-sage'
                       : showingWrong
-                        ? "tile-wrong border-2 border-coral"
-                        : "tile-missing border-2 border-dashed border-amber-warm"
+                        ? 'tile-wrong border-2 border-coral'
+                        : isDropHover
+                          ? 'tile-missing border-2 border-amber-warm ring-4 ring-amber-warm/30'
+                          : isActive
+                            ? 'tile-missing border-2 border-dashed border-amber-warm ring-3 ring-amber-warm/20'
+                            : 'tile-missing border-2 border-dashed border-amber-warm/55'
                   }`}
                 >
                   {solved ? (
@@ -204,41 +289,53 @@ export function PuzzleBoard({
                         initial={{ scale: 0, rotate: -25 }}
                         animate={{ scale: 1, rotate: 0 }}
                         transition={{
-                          type: "spring",
+                          type: 'spring',
                           stiffness: 500,
                           damping: 18,
                           delay: 0.08,
                         }}
-                        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-sage text-white flex items-center justify-center shadow-xs"
+                        className="absolute top-2 right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-sage text-white flex items-center justify-center shadow-xs"
                       >
-                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[3]" />
                       </motion.span>
-                      <span className="font-display text-5xl sm:text-[56px] font-bold text-sage-deep leading-none">
-                        {puzzle.answer}
+                      <span className="font-display text-5xl sm:text-[54px] font-bold text-sage-deep leading-none">
+                        {displayValue}
                       </span>
                     </>
                   ) : showingWrong ? (
-                    <span className="font-display text-5xl sm:text-[56px] font-bold text-coral-deep leading-none">
+                    <span className="font-display text-5xl sm:text-[54px] font-bold text-coral-deep leading-none">
                       {wrongGuess}
                     </span>
-                  ) : pendingTensDigit ? (
+                  ) : placedValue !== undefined ? (
+                    <>
+                      <span className="font-display text-4xl sm:text-[50px] font-bold text-amber-deep leading-none">
+                        {placedValue}
+                      </span>
+                      <span className="text-[10px] font-bold text-amber-deep/75">
+                        tap to clear
+                      </span>
+                    </>
+                  ) : isActive && pendingTypedPrefix ? (
                     <span className="font-display text-4xl sm:text-5xl font-bold text-amber-deep leading-none">
-                      1<span className="animate-pulse opacity-60">_</span>
+                      {pendingTypedPrefix}
+                      <span className="animate-pulse opacity-60">_</span>
                     </span>
                   ) : (
                     <motion.span
-                      animate={{ y: [0, -3, 0] }}
+                      animate={isActive ? { y: [0, -3, 0] } : { y: 0 }}
                       transition={{
                         duration: 2.2,
                         repeat: Infinity,
-                        ease: "easeInOut",
+                        ease: 'easeInOut',
                       }}
-                      className="font-display text-5xl sm:text-[56px] font-bold text-amber-warm leading-none"
+                      className={`font-display text-5xl sm:text-[54px] font-bold leading-none ${
+                        isActive ? 'text-amber-warm' : 'text-amber-warm/65'
+                      }`}
                     >
                       ?
                     </motion.span>
                   )}
-                </motion.div>
+                </motion.button>
               );
             })}
           </motion.div>
