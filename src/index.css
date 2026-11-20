@@ -82,6 +82,9 @@
   --cs-hint-bottom: #fef4db;
   --cs-hint-lip: #e0b563;
   --cs-pill-lip: #e3d9c5;
+  --cs-cta-top: #54ab88;
+  --cs-cta-bottom: #449675;
+  --cs-cta-lip: #2e7559;
 }
 
 [data-theme="matcha-garden"] {
@@ -138,6 +141,9 @@
   --cs-hint-bottom: #fdf3d7;
   --cs-hint-lip: #dbb05c;
   --cs-pill-lip: #cee0ca;
+  --cs-cta-top: #4aa17b;
+  --cs-cta-bottom: #3a8a67;
+  --cs-cta-lip: #24684b;
 }
 
 [data-theme="cozy-dusk"] {
@@ -194,6 +200,9 @@
   --cs-hint-bottom: #362b19;
   --cs-hint-lip: #241b0e;
   --cs-pill-lip: #151923;
+  --cs-cta-top: #5ec098;
+  --cs-cta-bottom: #48a781;
+  --cs-cta-lip: #1c4c3a;
 }
 
 @layer base {
@@ -218,10 +227,15 @@
       radial-gradient(circle at 12% 10%, var(--cs-wash-a), transparent 42%),
       radial-gradient(circle at 88% 88%, var(--cs-wash-b), transparent 44%),
       radial-gradient(var(--cs-dot) 1.15px, transparent 1.15px);
-    background-size: 100vw 100vh, 100vw 100vh, 24px 24px;
+    background-size:
+      100vw 100vh,
+      100vw 100vh,
+      24px 24px;
     background-repeat: no-repeat, no-repeat, repeat;
     background-attachment: fixed;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease;
   }
 }
 
@@ -251,6 +265,36 @@
 .cs-muted-pill {
   background-color: var(--cs-surface-muted);
   border-color: var(--cs-border);
+}
+
+.eq-ans-chip {
+  background: linear-gradient(180deg, var(--cs-cta-top) 0%, var(--cs-cta-bottom) 100%);
+  box-shadow:
+    0 3px 0 var(--cs-cta-lip),
+    0 6px 12px -4px rgba(0, 0, 0, 0.24);
+}
+
+.next-cta {
+  background: linear-gradient(180deg, var(--cs-cta-top) 0%, var(--cs-cta-bottom) 100%);
+  box-shadow:
+    0 3px 0 var(--cs-cta-lip),
+    0 8px 16px -6px rgba(0, 0, 0, 0.24);
+}
+
+@keyframes next-progress-sweep {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.next-progress-fill {
+  transform-origin: left center;
+  animation-name: next-progress-sweep;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
 }
 
 /* Tactile wooden/ceramic tray & tile surfaces */
@@ -302,7 +346,11 @@
     0 4px 0 var(--cs-key-lip),
     0 6px 12px -4px rgba(0, 0, 0, 0.13),
     inset 0 1px 0 var(--cs-tile-highlight);
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease, opacity 0.2s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background-color 0.15s ease,
+    opacity 0.2s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -360,7 +408,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-pulse-soft {
+  .animate-pulse-soft,
+  .next-progress-fill {
     animation: none;
   }
 }

@@ -1,13 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, MotionConfig, motion } from 'motion/react';
-import {
-  ArrowRight,
-  CalendarCheck,
-  Grip,
-  Lightbulb,
-  RefreshCw,
-  Sparkles,
-} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import { ArrowRight, CalendarCheck, Grip, Lightbulb, RefreshCw, Sparkles } from "lucide-react";
 import {
   DAILY_SIZE,
   SET_SIZE,
@@ -15,14 +8,13 @@ import {
   evaluateMultiGuess,
   generateDailyPuzzles,
   generatePuzzle,
-  getCelebrationMessage,
   getHintChoices,
   getTodayDateKey,
   getWrongFeedback,
   type Puzzle,
   type QuadrantIndex,
   type TargetSum,
-} from './game/puzzle';
+} from "./game/puzzle";
 import {
   checkSudokuConflict,
   generateSudoku4x4,
@@ -31,36 +23,44 @@ import {
   isBoxComplete,
   isSudokuSolved,
   type Sudoku4x4Puzzle,
-} from './game/sudoku4x4';
-import { STAMPS, type StampDefinition, type StampId, type ThemeId } from './game/stamps';
-import { soundEngine, triggerHaptic } from './game/sound';
-import { fireSetCompleteConfetti, fireSolvedConfetti } from './game/confetti';
+} from "./game/sudoku4x4";
+import { STAMPS, type StampDefinition, type StampId, type ThemeId } from "./game/stamps";
+import { soundEngine, triggerHaptic } from "./game/sound";
+import { fireSetCompleteConfetti, fireSolvedConfetti } from "./game/confetti";
 import {
   getTotalRewardCount,
   loadProgress,
   saveProgress,
   type PersistedProgress,
-} from './game/storage';
-import { Header } from './components/Header';
-import { ModeBar, type GameMode } from './components/ModeBar';
-import { StarTrack } from './components/StarTrack';
-import { PuzzleBoard } from './components/PuzzleBoard';
-import { Sudoku4x4Board } from './components/Sudoku4x4Board';
-import { TenFrameHint } from './components/TenFrameHint';
-import { NumberPad } from './components/NumberPad';
-import { StampShelfModal } from './components/StampShelfModal';
-import { StampIcon } from './components/StampIcon';
-import { HowToPlayModal } from './components/HowToPlayModal';
+} from "./game/storage";
+import { Header } from "./components/Header";
+import { ModeBar, type GameMode } from "./components/ModeBar";
+import { StarTrack } from "./components/StarTrack";
+import { PuzzleBoard } from "./components/PuzzleBoard";
+import { Sudoku4x4Board } from "./components/Sudoku4x4Board";
+import { TenFrameHint } from "./components/TenFrameHint";
+import { NumberPad } from "./components/NumberPad";
+import { StampShelfModal } from "./components/StampShelfModal";
+import { StampIcon } from "./components/StampIcon";
+import { HowToPlayModal } from "./components/HowToPlayModal";
 
 type FeedbackState =
-  | { kind: 'idle' }
-  | { kind: 'wrong'; message: string }
-  | { kind: 'solved'; message: string; justCompletedSet: boolean };
+  | { kind: "idle" }
+  | { kind: "wrong"; message: string }
+  | {
+      kind: "solved";
+      milestone: string | null;
+      justCompletedSet: boolean;
+      autoAdvanceMs: number | null;
+    };
+
+const AUTO_ADVANCE_NORMAL_MS = 4236; // φ³ × 1000 ms
+const AUTO_ADVANCE_MILESTONE_MS = 5236; // 2φ² × 1000 ms (same 2/φ ratio)
 
 const THEME_META_COLORS: Record<ThemeId, string> = {
-  'warm-paper': '#FBF7EF',
-  'matcha-garden': '#F2F7F0',
-  'cozy-dusk': '#1D222E',
+  "warm-paper": "#FBF7EF",
+  "matcha-garden": "#F2F7F0",
+  "cozy-dusk": "#1D222E",
 };
 
 const DIGITS_5 = [0, 1, 2, 3, 4, 5] as const;
@@ -83,7 +83,7 @@ export default function App() {
   const todayKey = useMemo(() => getTodayDateKey(), []);
   const dailyPuzzles = useMemo(() => generateDailyPuzzles(todayKey), [todayKey]);
 
-  const [mode, setMode] = useState<GameMode>('classic');
+  const [mode, setMode] = useState<GameMode>("classic");
   const [targetSum, setTargetSum] = useState<TargetSum>(10);
 
   // 2x2 / 2-Blank / Daily state
@@ -96,23 +96,20 @@ export default function App() {
   const [solved, setSolved] = useState(false);
   const [streak, setStreak] = useState(0);
   const [starsInSet, setStarsInSet] = useState(0);
-  const [attemptsThisRound, setAttemptsThisRound] = useState(0);
   const [triedWrong, setTriedWrong] = useState<Set<number>>(() => new Set());
   const [filledSlots, setFilledSlots] = useState<Partial<Record<QuadrantIndex, number>>>({});
   const [activeSlotIndex, setActiveSlotIndex] = useState<QuadrantIndex>(() => puzzle.missingIndex);
   const [wrongGuess, setWrongGuess] = useState<number | null>(null);
   const [wrongSlotIndex, setWrongSlotIndex] = useState<QuadrantIndex | null>(null);
   const [wrongAttemptKey, setWrongAttemptKey] = useState(0);
-  const [feedback, setFeedback] = useState<FeedbackState>({ kind: 'idle' });
+  const [feedback, setFeedback] = useState<FeedbackState>({ kind: "idle" });
   const [hintLevel, setHintLevel] = useState<0 | 1 | 2>(0);
   const [hintChoices, setHintChoices] = useState<number[] | null>(null);
-  const [pendingTypedPrefix, setPendingTypedPrefix] = useState('');
+  const [pendingTypedPrefix, setPendingTypedPrefix] = useState("");
   const [hoveredDropIndex, setHoveredDropIndex] = useState<number | null>(null);
 
   // 4x4 KidSudoku state
-  const [sudokuPuzzle, setSudokuPuzzle] = useState<Sudoku4x4Puzzle>(() =>
-    generateSudoku4x4(),
-  );
+  const [sudokuPuzzle, setSudokuPuzzle] = useState<Sudoku4x4Puzzle>(() => generateSudoku4x4());
   const [sudokuBoard, setSudokuBoard] = useState<Array<number | null>>(() => [
     ...sudokuPuzzle.givens,
   ]);
@@ -144,10 +141,10 @@ export default function App() {
   useEffect(() => {
     saveProgress(progress);
     soundEngine.setEnabled(progress.soundEnabled);
-    document.documentElement.setAttribute('data-theme', progress.theme);
+    document.documentElement.setAttribute("data-theme", progress.theme);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.setAttribute('content', THEME_META_COLORS[progress.theme]);
+      meta.setAttribute("content", THEME_META_COLORS[progress.theme]);
     }
   }, [progress]);
 
@@ -155,10 +152,10 @@ export default function App() {
   useEffect(() => {
     const unlockOnce = () => {
       soundEngine.unlock();
-      window.removeEventListener('pointerdown', unlockOnce);
+      window.removeEventListener("pointerdown", unlockOnce);
     };
-    window.addEventListener('pointerdown', unlockOnce, { passive: true });
-    return () => window.removeEventListener('pointerdown', unlockOnce);
+    window.addEventListener("pointerdown", unlockOnce, { passive: true });
+    return () => window.removeEventListener("pointerdown", unlockOnce);
   }, []);
 
   const clearTimers = useCallback(() => {
@@ -208,16 +205,15 @@ export default function App() {
       clearTimers();
       setPuzzle(nextPuzzle);
       setSolved(false);
-      setAttemptsThisRound(0);
       setTriedWrong(new Set());
       setFilledSlots({});
       setActiveSlotIndex(nextPuzzle.missingIndex);
       setWrongGuess(null);
       setWrongSlotIndex(null);
-      setFeedback({ kind: 'idle' });
+      setFeedback({ kind: "idle" });
       setHintLevel(0);
       setHintChoices(null);
-      setPendingTypedPrefix('');
+      setPendingTypedPrefix("");
       setHoveredDropIndex(null);
       if (resetSetStars) {
         setStarsInSet(0);
@@ -234,13 +230,13 @@ export default function App() {
     setSudokuSelected(firstEmptySudokuCell(next.givens));
     setSudokuConflicts(new Set());
     setSudokuSolved(false);
-    setFeedback({ kind: 'idle' });
+    setFeedback({ kind: "idle" });
     setHoveredDropIndex(null);
   }, [clearTimers]);
 
   const startNext2x2 = useCallback(
     (resetSetStars = false) => {
-      if (mode === 'daily') {
+      if (mode === "daily") {
         const nextIdx = dailyIndex + 1;
         if (nextIdx >= DAILY_SIZE) {
           setDailyFinishedRun(true);
@@ -251,7 +247,7 @@ export default function App() {
         return;
       }
 
-      const missingCount = mode === 'two-blank' ? 2 : 1;
+      const missingCount = mode === "two-blank" ? 2 : 1;
       const next = generatePuzzle({
         targetSum,
         missingCount,
@@ -266,26 +262,26 @@ export default function App() {
     (nextMode: GameMode) => {
       if (nextMode === mode) return;
       soundEngine.playTap();
-      triggerHaptic('tap');
+      triggerHaptic("tap");
       setMode(nextMode);
 
-      if (nextMode === 'sudoku-4x4') {
+      if (nextMode === "sudoku-4x4") {
         clearTimers();
-        setFeedback({ kind: 'idle' });
+        setFeedback({ kind: "idle" });
         if (sudokuSolved) {
           startFreshSudoku();
         }
         return;
       }
 
-      if (nextMode === 'daily') {
+      if (nextMode === "daily") {
         setDailyIndex(0);
         setDailyFinishedRun(false);
         load2x2Puzzle(dailyPuzzles[0], false);
         return;
       }
 
-      const missingCount = nextMode === 'two-blank' ? 2 : 1;
+      const missingCount = nextMode === "two-blank" ? 2 : 1;
       const next = generatePuzzle({ targetSum, missingCount });
       load2x2Puzzle(next, false);
     },
@@ -296,9 +292,9 @@ export default function App() {
     (nextTarget: TargetSum) => {
       if (nextTarget === targetSum) return;
       soundEngine.playTap();
-      triggerHaptic('tap');
+      triggerHaptic("tap");
       setTargetSum(nextTarget);
-      const missingCount = mode === 'two-blank' ? 2 : 1;
+      const missingCount = mode === "two-blank" ? 2 : 1;
       const next = generatePuzzle({ targetSum: nextTarget, missingCount });
       load2x2Puzzle(next, false);
     },
@@ -316,7 +312,7 @@ export default function App() {
   }, []);
 
   const celebrate2x2Win = useCallback(
-    (finalSlots: Partial<Record<QuadrantIndex, number>>, attemptsCount: number) => {
+    (finalSlots: Partial<Record<QuadrantIndex, number>>) => {
       setFilledSlots(finalSlots);
       setWrongGuess(null);
       setWrongSlotIndex(null);
@@ -325,7 +321,7 @@ export default function App() {
       const nextStreak = streak + 1;
       setStreak(nextStreak);
 
-      const isDaily = mode === 'daily';
+      const isDaily = mode === "daily";
       const justFinishedDaily = isDaily && dailyIndex === DAILY_SIZE - 1;
       const nextStarsInSet = isDaily ? dailyIndex + 1 : starsInSet + 1;
       const justCompletedSet = !isDaily && nextStarsInSet >= SET_SIZE;
@@ -345,9 +341,7 @@ export default function App() {
           ...prev,
           totalSolved: prev.totalSolved + 1,
           bestStreak: Math.max(prev.bestStreak, nextStreak),
-          setsCompleted: justCompletedSet
-            ? prev.setsCompleted + 1
-            : prev.setsCompleted,
+          setsCompleted: justCompletedSet ? prev.setsCompleted + 1 : prev.setsCompleted,
           dailyCompletedDates: nextDailyDates,
         };
 
@@ -358,36 +352,34 @@ export default function App() {
         return nextProgress;
       });
 
-      const message = justFinishedDaily
-        ? 'Daily Challenge complete!'
-        : getCelebrationMessage(
-            nextStreak,
-            attemptsCount,
-            justCompletedSet,
-            puzzle.targetSum,
-          );
+      const milestone = justFinishedDaily
+        ? "Daily 5 complete!"
+        : justCompletedSet
+          ? "★ 5 stars!"
+          : nextStreak > 0 && nextStreak % 5 === 0
+            ? `🔥 ${nextStreak} in a row!`
+            : null;
+
+      const delayMs =
+        justCompletedSet || justFinishedDaily ? AUTO_ADVANCE_MILESTONE_MS : AUTO_ADVANCE_NORMAL_MS;
 
       setFeedback({
-        kind: 'solved',
-        message,
+        kind: "solved",
+        milestone,
         justCompletedSet: justCompletedSet || justFinishedDaily,
+        autoAdvanceMs: delayMs,
       });
 
-      if (
-        justCompletedSet ||
-        justFinishedDaily ||
-        (nextStreak > 0 && nextStreak % 5 === 0)
-      ) {
+      if (justCompletedSet || justFinishedDaily || (nextStreak > 0 && nextStreak % 5 === 0)) {
         soundEngine.playSetComplete();
-        triggerHaptic('setComplete');
+        triggerHaptic("setComplete");
         fireSetCompleteConfetti();
       } else {
         soundEngine.playCorrect(nextStreak);
-        triggerHaptic('correct');
+        triggerHaptic("correct");
         fireSolvedConfetti(getBoardOrigin());
       }
 
-      const delayMs = justCompletedSet || justFinishedDaily ? 2300 : 1600;
       autoAdvanceTimerRef.current = window.setTimeout(() => {
         if (justFinishedDaily) {
           setDailyFinishedRun(true);
@@ -400,7 +392,6 @@ export default function App() {
       dailyIndex,
       getBoardOrigin,
       mode,
-      puzzle.targetSum,
       showStampToastIfUnlocked,
       starsInSet,
       startNext2x2,
@@ -411,30 +402,28 @@ export default function App() {
 
   const handleSelect2x2Number = useCallback(
     (digit: number, explicitSlot?: QuadrantIndex) => {
-      if (solved || (mode === 'daily' && dailyFinishedRun)) return;
+      if (solved || (mode === "daily" && dailyFinishedRun)) return;
 
       if (multiDigitTimerRef.current !== null) {
         window.clearTimeout(multiDigitTimerRef.current);
         multiDigitTimerRef.current = null;
-        setPendingTypedPrefix('');
+        setPendingTypedPrefix("");
       }
 
       // Single-missing mode (Classic & Daily)
       if (puzzle.missingCount === 1) {
         if (triedWrong.has(digit)) return;
         const evaluation = evaluateGuess(puzzle, digit);
-        const nextAttempts = attemptsThisRound + 1;
-        setAttemptsThisRound(nextAttempts);
 
-        if (evaluation.status === 'correct') {
+        if (evaluation.status === "correct") {
           if (wrongClearTimerRef.current !== null) {
             window.clearTimeout(wrongClearTimerRef.current);
             wrongClearTimerRef.current = null;
           }
-          celebrate2x2Win({ [puzzle.missingIndex]: digit }, nextAttempts);
+          celebrate2x2Win({ [puzzle.missingIndex]: digit });
         } else {
           soundEngine.playWrong();
-          triggerHaptic('wrong');
+          triggerHaptic("wrong");
           setStreak(0);
           setWrongGuess(digit);
           setWrongSlotIndex(puzzle.missingIndex);
@@ -444,7 +433,7 @@ export default function App() {
             next.add(digit);
             return next;
           });
-          setFeedback({ kind: 'wrong', message: getWrongFeedback(evaluation) });
+          setFeedback({ kind: "wrong", message: getWrongFeedback(evaluation) });
 
           if (wrongClearTimerRef.current !== null) {
             window.clearTimeout(wrongClearTimerRef.current);
@@ -474,10 +463,10 @@ export default function App() {
       // Only 1 of the 2 blanks filled so far
       if (nextFilled[otherSlot] === undefined) {
         soundEngine.playTap();
-        triggerHaptic('tap');
+        triggerHaptic("tap");
         setFilledSlots(nextFilled);
         setActiveSlotIndex(otherSlot);
-        setFeedback({ kind: 'idle' });
+        setFeedback({ kind: "idle" });
         if (hintLevel === 2) {
           setHintChoices(getHintChoices(puzzle, Math.random, digit));
         }
@@ -487,19 +476,17 @@ export default function App() {
       // Both blanks filled — evaluate total!
       const evaluation = evaluateMultiGuess(puzzle, nextFilled);
       if (!evaluation) return;
-      const nextAttempts = attemptsThisRound + 1;
-      setAttemptsThisRound(nextAttempts);
 
-      if (evaluation.status === 'correct') {
-        celebrate2x2Win(nextFilled, nextAttempts);
+      if (evaluation.status === "correct") {
+        celebrate2x2Win(nextFilled);
       } else {
         soundEngine.playWrong();
-        triggerHaptic('wrong');
+        triggerHaptic("wrong");
         setStreak(0);
         setWrongGuess(digit);
         setWrongSlotIndex(targetSlot);
         setWrongAttemptKey((k) => k + 1);
-        setFeedback({ kind: 'wrong', message: getWrongFeedback(evaluation) });
+        setFeedback({ kind: "wrong", message: getWrongFeedback(evaluation) });
 
         // Keep the other slot intact, clear the just-placed slot after wobble
         const keptOther: Partial<Record<QuadrantIndex, number>> = {
@@ -520,7 +507,6 @@ export default function App() {
     },
     [
       activeSlotIndex,
-      attemptsThisRound,
       celebrate2x2Win,
       dailyFinishedRun,
       filledSlots,
@@ -536,7 +522,7 @@ export default function App() {
     (index: QuadrantIndex) => {
       if (solved || !puzzle.missingIndices.includes(index)) return;
       soundEngine.playTap();
-      triggerHaptic('tap');
+      triggerHaptic("tap");
 
       if (filledSlots[index] !== undefined) {
         setFilledSlots((prev) => {
@@ -544,7 +530,7 @@ export default function App() {
           delete next[index];
           return next;
         });
-        setFeedback({ kind: 'idle' });
+        setFeedback({ kind: "idle" });
       }
       setActiveSlotIndex(index);
     },
@@ -561,10 +547,10 @@ export default function App() {
       const conflict = checkSudokuConflict(sudokuBoard, cellIdx, digit);
       if (conflict) {
         soundEngine.playWrong();
-        triggerHaptic('wrong');
+        triggerHaptic("wrong");
         setSudokuConflicts(new Set([cellIdx, ...conflict.conflictingIndices]));
         setSudokuConflictKey((k) => k + 1);
-        setFeedback({ kind: 'wrong', message: conflict.message });
+        setFeedback({ kind: "wrong", message: conflict.message });
         if (wrongClearTimerRef.current !== null) {
           window.clearTimeout(wrongClearTimerRef.current);
         }
@@ -606,24 +592,25 @@ export default function App() {
         });
 
         setFeedback({
-          kind: 'solved',
-          message: '4×4 KidSudoku solved! Every box makes 10!',
+          kind: "solved",
+          milestone: null,
           justCompletedSet: true,
+          autoAdvanceMs: null,
         });
         soundEngine.playSetComplete();
-        triggerHaptic('setComplete');
+        triggerHaptic("setComplete");
         fireSetCompleteConfetti();
         return;
       }
 
       if (!wasBoxDone && nowBoxDone) {
         soundEngine.playCorrect(1);
-        triggerHaptic('correct');
-        setFeedback({ kind: 'idle' });
+        triggerHaptic("correct");
+        setFeedback({ kind: "idle" });
       } else {
         soundEngine.playTap();
-        triggerHaptic('tap');
-        setFeedback({ kind: 'idle' });
+        triggerHaptic("tap");
+        setFeedback({ kind: "idle" });
       }
 
       // Advance to next empty cell
@@ -646,39 +633,36 @@ export default function App() {
     if (sudokuBoard[sudokuSelected] === null) return;
 
     soundEngine.playTap();
-    triggerHaptic('tap');
+    triggerHaptic("tap");
     setSudokuBoard((prev) => {
       const next = [...prev];
       next[sudokuSelected] = null;
       return next;
     });
-    setFeedback({ kind: 'idle' });
+    setFeedback({ kind: "idle" });
   }, [sudokuBoard, sudokuPuzzle.givens, sudokuSelected, sudokuSolved]);
 
   const handleHint = useCallback(() => {
-    if (mode === 'sudoku-4x4') {
+    if (mode === "sudoku-4x4") {
       if (sudokuSolved) return;
       const hint = getSudokuHint(sudokuPuzzle, sudokuBoard);
       if (!hint) return;
       soundEngine.playHint();
-      triggerHaptic('tap');
+      triggerHaptic("tap");
       setSudokuSelected(hint.index);
       handlePlaceSudokuDigit(hint.digit, hint.index);
       return;
     }
 
-    if (solved || hintLevel >= 2 || (mode === 'daily' && dailyFinishedRun)) return;
+    if (solved || hintLevel >= 2 || (mode === "daily" && dailyFinishedRun)) return;
     soundEngine.playHint();
-    triggerHaptic('tap');
+    triggerHaptic("tap");
 
     if (hintLevel === 0) {
       setHintLevel(1);
     } else if (hintLevel === 1) {
       setHintLevel(2);
-      const alreadyFilledSum = Object.values(filledSlots).reduce(
-        (acc, v) => acc + (v ?? 0),
-        0,
-      );
+      const alreadyFilledSum = Object.values(filledSlots).reduce((acc, v) => acc + (v ?? 0), 0);
       setHintChoices(getHintChoices(puzzle, Math.random, alreadyFilledSum));
     }
   }, [
@@ -696,8 +680,8 @@ export default function App() {
 
   const handleSkip = useCallback(() => {
     soundEngine.playTap();
-    triggerHaptic('tap');
-    if (mode === 'sudoku-4x4') {
+    triggerHaptic("tap");
+    if (mode === "sudoku-4x4") {
       startFreshSudoku();
     } else {
       startNext2x2(false);
@@ -705,7 +689,7 @@ export default function App() {
   }, [mode, startFreshSudoku, startNext2x2]);
 
   const handleToggleSound = useCallback(() => {
-    triggerHaptic('tap');
+    triggerHaptic("tap");
     setProgress((prev) => {
       const nextEnabled = !prev.soundEnabled;
       soundEngine.setEnabled(nextEnabled);
@@ -720,13 +704,13 @@ export default function App() {
 
   const handleTogglePips = useCallback(() => {
     soundEngine.playTap();
-    triggerHaptic('tap');
+    triggerHaptic("tap");
     setProgress((prev) => ({ ...prev, pipsEnabled: !prev.pipsEnabled }));
   }, []);
 
   const handleOpenShelf = useCallback(() => {
     soundEngine.playTap();
-    triggerHaptic('tap');
+    triggerHaptic("tap");
     setShelfOpen(true);
     setUnlockedToast(null);
     setProgress((prev) => ({
@@ -736,7 +720,7 @@ export default function App() {
   }, []);
 
   const handleLogoClick = useCallback(() => {
-    triggerHaptic('tap');
+    triggerHaptic("tap");
     setLogoPressCount((c) => c + 1);
     const started = soundEngine.playLogoClip(() => {
       setLogoPlaying(false);
@@ -748,13 +732,13 @@ export default function App() {
 
   const handleSelectTheme = useCallback((theme: ThemeId) => {
     soundEngine.playTap();
-    triggerHaptic('tap');
+    triggerHaptic("tap");
     setProgress((prev) => ({ ...prev, theme }));
   }, []);
 
   const handlePinStamp = useCallback((stampId: StampId | null) => {
     soundEngine.playTap();
-    triggerHaptic('tap');
+    triggerHaptic("tap");
     setProgress((prev) => ({ ...prev, pinnedStampId: stampId }));
   }, []);
 
@@ -764,60 +748,60 @@ export default function App() {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
       if (helpOpen || shelfOpen) {
-        if (e.key === 'Escape') {
+        if (e.key === "Escape") {
           setHelpOpen(false);
           setShelfOpen(false);
         }
         return;
       }
 
-      if (e.key === 'm' || e.key === 'M') {
+      if (e.key === "m" || e.key === "M") {
         handleToggleSound();
         return;
       }
-      if (e.key === 'h' || e.key === 'H') {
+      if (e.key === "h" || e.key === "H") {
         handleHint();
         return;
       }
 
-      if (mode === 'sudoku-4x4') {
+      if (mode === "sudoku-4x4") {
         if (sudokuSolved) {
-          if (e.key === 'Enter' || e.key === ' ') {
+          if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             startFreshSudoku();
           }
           return;
         }
-        if (e.key >= '1' && e.key <= '4') {
+        if (e.key >= "1" && e.key <= "4") {
           handlePlaceSudokuDigit(Number(e.key));
-        } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        } else if (e.key === "Backspace" || e.key === "Delete") {
           handleEraseSudokuCell();
         }
         return;
       }
 
-      if (mode === 'daily' && dailyFinishedRun) return;
+      if (mode === "daily" && dailyFinishedRun) return;
 
       if (solved) {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           startNext2x2(starsInSet >= SET_SIZE);
         }
         return;
       }
 
-      if (e.key === 'Enter' && pendingTypedPrefix) {
+      if (e.key === "Enter" && pendingTypedPrefix) {
         if (multiDigitTimerRef.current !== null) {
           window.clearTimeout(multiDigitTimerRef.current);
           multiDigitTimerRef.current = null;
         }
         const val = Number(pendingTypedPrefix);
-        setPendingTypedPrefix('');
+        setPendingTypedPrefix("");
         handleSelect2x2Number(val);
         return;
       }
 
-      if (e.key >= '0' && e.key <= '9') {
+      if (e.key >= "0" && e.key <= "9") {
         const digit = Number(e.key);
 
         if (pendingTypedPrefix) {
@@ -826,7 +810,7 @@ export default function App() {
             multiDigitTimerRef.current = null;
           }
           const combined = Number(`${pendingTypedPrefix}${digit}`);
-          setPendingTypedPrefix('');
+          setPendingTypedPrefix("");
           if (combined <= puzzle.targetSum) {
             handleSelect2x2Number(combined);
           } else {
@@ -844,7 +828,7 @@ export default function App() {
           soundEngine.playTap();
           setPendingTypedPrefix(String(digit));
           multiDigitTimerRef.current = window.setTimeout(() => {
-            setPendingTypedPrefix('');
+            setPendingTypedPrefix("");
             multiDigitTimerRef.current = null;
             handleSelect2x2Number(digit);
           }, 680);
@@ -857,8 +841,8 @@ export default function App() {
       }
     };
 
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [
     dailyFinishedRun,
     handleEraseSudokuCell,
@@ -884,7 +868,7 @@ export default function App() {
   );
 
   const activeDigits =
-    mode === 'sudoku-4x4'
+    mode === "sudoku-4x4"
       ? DIGITS_SUDOKU
       : puzzle.targetSum === 5
         ? DIGITS_5
@@ -902,7 +886,7 @@ export default function App() {
     return set;
   }, [filledSlots, puzzle.answer, puzzle.missingIndices, solved]);
 
-  const isDailyCompleteCard = mode === 'daily' && dailyFinishedRun;
+  const isDailyCompleteCard = mode === "daily" && dailyFinishedRun;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -920,7 +904,7 @@ export default function App() {
           onToggleSound={handleToggleSound}
           onOpenHelp={() => {
             soundEngine.playTap();
-            triggerHaptic('tap');
+            triggerHaptic("tap");
             setHelpOpen(true);
           }}
         />
@@ -955,7 +939,7 @@ export default function App() {
                 <StampIcon id={unlockedToast.id} className="w-5 h-5" />
               </span>
               <span className="text-xs sm:text-sm font-bold text-ink">
-                New stamp unlocked:{' '}
+                New stamp unlocked:{" "}
                 <strong className="text-amber-deep">{unlockedToast.name}</strong>!
               </span>
             </motion.button>
@@ -973,19 +957,16 @@ export default function App() {
               <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-sage-wash border border-sage/45 text-sage-deep flex items-center justify-center">
                 <CalendarCheck className="w-7 h-7" />
               </div>
-              <h2 className="font-display text-2xl font-bold text-ink">
-                Daily 5 Complete!
-              </h2>
+              <h2 className="font-display text-2xl font-bold text-ink">Daily 5 Complete!</h2>
               <p className="text-sm font-semibold text-ink-soft mt-1">
-                You solved all 5 squares for{' '}
-                <span className="text-ink font-bold">{todayKey}</span>. Come back
-                tomorrow for a fresh set!
+                You solved all 5 squares for <span className="text-ink font-bold">{todayKey}</span>.
+                Come back tomorrow for a fresh set!
               </p>
 
               <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-2.5">
                 <button
                   type="button"
-                  onClick={() => handleChangeMode('classic')}
+                  onClick={() => handleChangeMode("classic")}
                   className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-sage text-white font-display text-base font-semibold shadow-[0_4px_0_#317559] cursor-pointer active:translate-y-[2px] transition"
                 >
                   Play Free 2×2
@@ -1005,34 +986,30 @@ export default function App() {
           <main className="flex-1 w-full max-w-xl mx-auto px-3 sm:px-4 flex flex-col items-center justify-center gap-2.5 sm:gap-3 py-1 [@media(orientation:landscape)_and_(max-height:520px)]:max-w-3xl [@media(orientation:landscape)_and_(max-height:520px)]:grid [@media(orientation:landscape)_and_(max-height:520px)]:grid-cols-[auto_1fr] [@media(orientation:landscape)_and_(max-height:520px)]:items-center [@media(orientation:landscape)_and_(max-height:520px)]:gap-5">
             {/* Left column in mobile landscape: StarTrack + Board */}
             <div className="w-full flex flex-col items-center gap-2 sm:gap-2.5">
-              {mode !== 'sudoku-4x4' && (
+              {mode !== "sudoku-4x4" && (
                 <StarTrack
-                  starsInSet={
-                    mode === 'daily'
-                      ? dailyIndex + (solved ? 1 : 0)
-                      : starsInSet
-                  }
+                  starsInSet={mode === "daily" ? dailyIndex + (solved ? 1 : 0) : starsInSet}
                   setsCompleted={progress.setsCompleted}
                   pinnedStampId={progress.pinnedStampId}
                   onOpenShelf={handleOpenShelf}
                   dailyLabel={
-                    mode === 'daily'
+                    mode === "daily"
                       ? `Daily · ${Math.min(dailyIndex + 1, DAILY_SIZE)}/${DAILY_SIZE}`
                       : null
                   }
                 />
               )}
 
-              {mode === 'sudoku-4x4' ? (
+              {mode === "sudoku-4x4" ? (
                 <Sudoku4x4Board
                   puzzle={sudokuPuzzle}
                   board={sudokuBoard}
                   selectedIndex={sudokuSelected}
                   onSelectCell={(idx) => {
                     soundEngine.playTap();
-                    triggerHaptic('tap');
+                    triggerHaptic("tap");
                     setSudokuSelected(idx);
-                    setFeedback({ kind: 'idle' });
+                    setFeedback({ kind: "idle" });
                   }}
                   conflictIndices={sudokuConflicts}
                   conflictKey={sudokuConflictKey}
@@ -1054,7 +1031,7 @@ export default function App() {
                   pipsEnabled={progress.pipsEnabled}
                   pendingTypedPrefix={pendingTypedPrefix}
                   hoveredDropIndex={hoveredDropIndex}
-                  allowTargetSelect={mode === 'classic' || mode === 'two-blank'}
+                  allowTargetSelect={mode === "classic" || mode === "two-blank"}
                   onChangeTargetSum={handleChangeTargetSum}
                   boardRef={boardRef}
                 />
@@ -1063,61 +1040,53 @@ export default function App() {
 
             {/* Right column in mobile landscape: Feedback + TenFrame + NumberPad + Actions */}
             <div className="w-full flex flex-col items-center gap-2.5 sm:gap-3">
-              {/* Stable-height Feedback / Equation Bar */}
-              <div className="w-full max-w-md min-h-[38px] sm:min-h-[42px] flex items-center justify-center">
+              {/* Stable-height Feedback / Standalone Equation Slot */}
+              <div className="w-full max-w-md min-h-[42px] sm:min-h-[46px] flex items-center justify-center">
                 <AnimatePresence mode="wait">
-                  {feedback.kind === 'solved' ? (
+                  {feedback.kind === "solved" ? (
                     <motion.div
-                      key={`solved-${mode === 'sudoku-4x4' ? sudokuPuzzle.id : puzzle.id}`}
-                      initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                      key={`solved-eq-${mode === "sudoku-4x4" ? sudokuPuzzle.id : puzzle.id}`}
+                      initial={{ opacity: 0, y: 6, scale: 0.94 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                      transition={{ type: 'spring', stiffness: 460, damping: 24 }}
-                      className="flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 rounded-2xl bg-sage-wash border border-sage/50 text-sage-deep shadow-xs"
+                      transition={{ type: "spring", stiffness: 460, damping: 24 }}
+                      role="status"
+                      aria-live="polite"
+                      className="flex items-center justify-center"
                     >
-                      {mode !== 'sudoku-4x4' && (
-                        <span className="font-display text-sm sm:text-base font-bold">
+                      {mode === "sudoku-4x4" ? (
+                        <span className="font-display text-xl sm:text-2xl font-bold text-sage-deep inline-flex items-center gap-1.5">
+                          <Sparkles className="w-5 h-5 text-sage" />
+                          <span>Every box makes 10!</span>
+                        </span>
+                      ) : (
+                        <div className="font-display text-[1.75rem] sm:text-[2rem] font-bold text-ink flex flex-wrap items-center justify-center leading-none tracking-tight">
                           {completedNumbers.map((n, idx) => (
-                            <span key={idx}>
+                            <span key={idx} className="inline-flex items-center">
                               {idx > 0 && (
-                                <span className="mx-1 opacity-55 font-sans font-bold">
+                                <span className="mx-1.5 sm:mx-2 font-sans text-xl sm:text-2xl font-extrabold text-[var(--cs-ink-muted)]">
                                   +
                                 </span>
                               )}
                               <span
                                 className={
                                   puzzle.missingIndices.includes(idx as QuadrantIndex)
-                                    ? 'inline-block px-1.5 py-0.5 rounded-md bg-sage text-white leading-none'
-                                    : ''
+                                    ? "eq-ans-chip inline-flex items-center justify-center min-w-[2.25rem] sm:min-w-[2.5rem] px-2 sm:px-2.5 py-1 rounded-xl text-white leading-none"
+                                    : ""
                                 }
                               >
                                 {n}
                               </span>
                             </span>
                           ))}
-                          <span className="mx-1.5 opacity-60">=</span>
-                          <span>{puzzle.targetSum}</span>
-                        </span>
+                          <span className="mx-2 font-sans text-xl sm:text-2xl font-extrabold text-[var(--cs-ink-muted)]">
+                            =
+                          </span>
+                          <span className="text-sage-deep">{puzzle.targetSum}</span>
+                        </div>
                       )}
-                      <span className="text-xs sm:text-sm font-extrabold text-sage-deep/95">
-                        {mode === 'sudoku-4x4'
-                          ? feedback.message
-                          : `· ${feedback.message}`}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          mode === 'sudoku-4x4'
-                            ? startFreshSudoku()
-                            : startNext2x2(feedback.justCompletedSet)
-                        }
-                        className="ml-1 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sage text-white text-xs font-bold [@media(hover:hover)]:hover:brightness-105 active:scale-95 transition cursor-pointer"
-                      >
-                        Next
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
                     </motion.div>
-                  ) : feedback.kind === 'wrong' ? (
+                  ) : feedback.kind === "wrong" ? (
                     <motion.div
                       key={`wrong-${wrongAttemptKey}-${sudokuConflictKey}`}
                       initial={{ opacity: 0, y: 4, scale: 0.96 }}
@@ -1138,18 +1107,17 @@ export default function App() {
                       exit={{ opacity: 0, transition: { duration: 0.08 } }}
                       className="text-xs sm:text-sm font-semibold text-ink-soft text-center"
                     >
-                      {mode === 'sudoku-4x4' ? (
-                        'Tap or drag 1–4 into any open square'
+                      {mode === "sudoku-4x4" ? (
+                        "Tap or drag 1–4 into any open square"
                       ) : hintLevel === 2 ? (
                         <span>
-                          Highlighted{' '}
-                          <strong className="text-amber-deep">3 choices</strong>{' '}
-                          below — which one makes {puzzle.targetSum}?
+                          Highlighted <strong className="text-amber-deep">3 choices</strong> below —
+                          which one makes {puzzle.targetSum}?
                         </span>
-                      ) : mode === 'two-blank' ? (
-                        'Any pair that reaches the target wins — tap or drag!'
+                      ) : mode === "two-blank" ? (
+                        "Any pair that reaches the target wins — tap or drag!"
                       ) : (
-                        'Tap or drag a number into the glowing square'
+                        "Tap or drag a number into the glowing square"
                       )}
                     </motion.p>
                   )}
@@ -1158,7 +1126,7 @@ export default function App() {
 
               {/* Expandable Five / Ten / Double-Ten Frame Visual Hint */}
               <AnimatePresence>
-                {mode !== 'sudoku-4x4' && hintLevel >= 1 && (
+                {mode !== "sudoku-4x4" && hintLevel >= 1 && (
                   <TenFrameHint
                     puzzle={puzzle}
                     hintLevel={hintLevel}
@@ -1172,14 +1140,14 @@ export default function App() {
               <NumberPad
                 digits={activeDigits}
                 onSelect={(digit) => {
-                  if (mode === 'sudoku-4x4') {
+                  if (mode === "sudoku-4x4") {
                     handlePlaceSudokuDigit(digit);
                   } else {
                     handleSelect2x2Number(digit);
                   }
                 }}
                 onDropOnTarget={(digit, targetIdx) => {
-                  if (mode === 'sudoku-4x4') {
+                  if (mode === "sudoku-4x4") {
                     setSudokuSelected(targetIdx);
                     handlePlaceSudokuDigit(digit, targetIdx);
                   } else {
@@ -1187,73 +1155,121 @@ export default function App() {
                   }
                 }}
                 onHoverDropTarget={setHoveredDropIndex}
-                dropAttribute={
-                  mode === 'sudoku-4x4' ? 'data-drop-sudoku' : 'data-drop-quadrant'
-                }
-                triedWrong={mode === 'sudoku-4x4' ? undefined : triedWrong}
-                solved={mode === 'sudoku-4x4' ? sudokuSolved : solved}
-                winningDigits={mode === 'sudoku-4x4' ? undefined : winningDigits}
-                hintChoices={mode === 'sudoku-4x4' ? null : hintChoices}
-                showErase={mode === 'sudoku-4x4'}
+                dropAttribute={mode === "sudoku-4x4" ? "data-drop-sudoku" : "data-drop-quadrant"}
+                triedWrong={mode === "sudoku-4x4" ? undefined : triedWrong}
+                solved={mode === "sudoku-4x4" ? sudokuSolved : solved}
+                winningDigits={mode === "sudoku-4x4" ? undefined : winningDigits}
+                hintChoices={mode === "sudoku-4x4" ? null : hintChoices}
+                showErase={mode === "sudoku-4x4"}
                 onErase={handleEraseSudokuCell}
               />
 
-              {/* Secondary actions */}
-              <div className="flex items-center justify-center flex-wrap gap-2 pt-0.5">
-                <button
-                  type="button"
-                  onClick={handleHint}
-                  disabled={
-                    mode === 'sudoku-4x4'
-                      ? sudokuSolved
-                      : solved || hintLevel >= 2
-                  }
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold border transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
-                    (mode === 'sudoku-4x4' ? sudokuSolved : solved || hintLevel >= 2)
-                      ? 'cs-muted-pill text-[var(--cs-ink-muted)] cursor-default'
-                      : mode !== 'sudoku-4x4' && hintLevel === 1
-                        ? 'bg-amber-wash border-amber-warm/65 text-amber-deep shadow-[0_2px_0_var(--cs-pill-lip)] active:translate-y-[1px]'
-                        : 'cs-pill text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px]'
-                  }`}
-                >
-                  <Lightbulb className="w-4 h-4" />
-                  <span>
-                    {mode === 'sudoku-4x4'
-                      ? 'Hint'
-                      : hintLevel === 0
-                        ? 'Hint'
-                        : hintLevel === 1
-                          ? 'Narrow choices'
-                          : 'Hint shown'}
-                  </span>
-                </button>
+              {/* Secondary actions — swaps cleanly into Next CTA while solved (Option A1) */}
+              <div className="min-h-[42px] flex items-center justify-center pt-0.5">
+                <AnimatePresence mode="wait">
+                  {feedback.kind === "solved" ? (
+                    <motion.div
+                      key={`solved-actions-${mode === "sudoku-4x4" ? sudokuPuzzle.id : puzzle.id}`}
+                      initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                      transition={{ duration: 0.16 }}
+                      className="flex items-center justify-center flex-wrap gap-2.5"
+                    >
+                      {feedback.milestone && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-wash border border-amber-warm/60 text-amber-deep text-xs sm:text-sm font-extrabold">
+                          {feedback.milestone}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          mode === "sudoku-4x4"
+                            ? startFreshSudoku()
+                            : startNext2x2(feedback.justCompletedSet)
+                        }
+                        className="next-cta relative overflow-hidden inline-flex items-center justify-center gap-1.5 px-5 py-2 rounded-full text-white text-sm font-extrabold [@media(hover:hover)]:hover:brightness-105 active:translate-y-[1px] transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage"
+                      >
+                        {feedback.autoAdvanceMs !== null && (
+                          <span
+                            aria-hidden="true"
+                            className="next-progress-fill pointer-events-none absolute inset-0 bg-white/22"
+                            style={{ animationDuration: `${feedback.autoAdvanceMs}ms` }}
+                          />
+                        )}
+                        <span className="relative z-10 inline-flex items-center gap-1.5">
+                          <span>
+                            {mode === "sudoku-4x4"
+                              ? "New Board"
+                              : mode === "daily" && dailyIndex === DAILY_SIZE - 1
+                                ? "Finish"
+                                : "Next"}
+                          </span>
+                          <ArrowRight className="w-4 h-4" />
+                        </span>
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="play-actions"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                      className="flex items-center justify-center flex-wrap gap-2"
+                    >
+                      <button
+                        type="button"
+                        onClick={handleHint}
+                        disabled={mode === "sudoku-4x4" ? sudokuSolved : solved || hintLevel >= 2}
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold border transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
+                          (mode === "sudoku-4x4" ? sudokuSolved : solved || hintLevel >= 2)
+                            ? "cs-muted-pill text-[var(--cs-ink-muted)] cursor-default"
+                            : mode !== "sudoku-4x4" && hintLevel === 1
+                              ? "bg-amber-wash border-amber-warm/65 text-amber-deep shadow-[0_2px_0_var(--cs-pill-lip)] active:translate-y-[1px]"
+                              : "cs-pill text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px]"
+                        }`}
+                      >
+                        <Lightbulb className="w-4 h-4" />
+                        <span>
+                          {mode === "sudoku-4x4"
+                            ? "Hint"
+                            : hintLevel === 0
+                              ? "Hint"
+                              : hintLevel === 1
+                                ? "Narrow choices"
+                                : "Hint shown"}
+                        </span>
+                      </button>
 
-                {mode !== 'sudoku-4x4' && (
-                  <button
-                    type="button"
-                    onClick={handleTogglePips}
-                    aria-pressed={progress.pipsEnabled}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold border transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
-                      progress.pipsEnabled
-                        ? 'bg-amber-wash border-amber-warm/65 text-amber-deep shadow-[0_2px_0_var(--cs-pill-lip)] active:translate-y-[1px]'
-                        : 'cs-pill text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px]'
-                    }`}
-                  >
-                    <Grip className="w-4 h-4" />
-                    <span>Dots</span>
-                  </button>
-                )}
+                      {mode !== "sudoku-4x4" && (
+                        <button
+                          type="button"
+                          onClick={handleTogglePips}
+                          aria-pressed={progress.pipsEnabled}
+                          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold border transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
+                            progress.pipsEnabled
+                              ? "bg-amber-wash border-amber-warm/65 text-amber-deep shadow-[0_2px_0_var(--cs-pill-lip)] active:translate-y-[1px]"
+                              : "cs-pill text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px]"
+                          }`}
+                        >
+                          <Grip className="w-4 h-4" />
+                          <span>Dots</span>
+                        </button>
+                      )}
 
-                {mode !== 'daily' && (
-                  <button
-                    type="button"
-                    onClick={handleSkip}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold cs-pill border text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px] transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>{mode === 'sudoku-4x4' ? 'New Board' : 'New Square'}</span>
-                  </button>
-                )}
+                      {mode !== "daily" && (
+                        <button
+                          type="button"
+                          onClick={handleSkip}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold cs-pill border text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px] transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>{mode === "sudoku-4x4" ? "New Board" : "New Square"}</span>
+                        </button>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </main>
