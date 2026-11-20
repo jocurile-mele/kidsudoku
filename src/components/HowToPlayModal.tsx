@@ -1,5 +1,5 @@
-import { AnimatePresence, motion } from 'motion/react';
-import { Lightbulb, Sparkles, X } from 'lucide-react';
+import { AnimatePresence, motion } from "motion/react";
+import { Lightbulb, Sparkles, X } from "lucide-react";
 
 interface HowToPlayModalProps {
   open: boolean;
@@ -25,15 +25,12 @@ export function HowToPlayModal({ open, onClose }: HowToPlayModalProps) {
             initial={{ opacity: 0, scale: 0.92, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 8 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+            transition={{ type: "spring", stiffness: 420, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-sm rounded-3xl bg-cream border border-[#e4dac6] p-6 shadow-[0_24px_54px_-16px_rgba(43,41,38,0.28)]"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2
-                id="how-to-play-title"
-                className="font-display text-2xl font-bold text-ink"
-              >
+              <h2 id="how-to-play-title" className="font-display text-2xl font-bold text-ink">
                 How to Play
               </h2>
               <button
@@ -78,7 +75,7 @@ export function HowToPlayModal({ open, onClose }: HowToPlayModalProps) {
                   1
                 </span>
                 <span>
-                  Numbers <strong className="text-ink">can repeat</strong>, and{' '}
+                  Numbers <strong className="text-ink">can repeat</strong>, and{" "}
                   <strong className="text-ink">0 is allowed</strong>!
                 </span>
               </li>
@@ -87,8 +84,8 @@ export function HowToPlayModal({ open, onClose }: HowToPlayModalProps) {
                   <Lightbulb className="w-3 h-3" />
                 </span>
                 <span>
-                  Tap <strong className="text-ink">Hint</strong> to see a 10-bead
-                  counting frame, or tap again to narrow the choices.
+                  Tap <strong className="text-ink">Hint</strong> to see a 10-bead counting frame, or
+                  tap again to narrow the choices.
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
@@ -96,10 +93,10 @@ export function HowToPlayModal({ open, onClose }: HowToPlayModalProps) {
                   <Sparkles className="w-3 h-3" />
                 </span>
                 <span>
-                  Solve 5 puzzles to complete a star set. Keyboard keys{' '}
+                  Solve 5 puzzles to complete a star set. Keyboard keys{" "}
                   <kbd className="px-1.5 py-0.5 rounded bg-[#f1eadc] text-ink text-xs font-bold">
                     0–9
-                  </kbd>{' '}
+                  </kbd>{" "}
                   work too!
                 </span>
               </li>

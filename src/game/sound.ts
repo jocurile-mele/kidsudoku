@@ -1,6 +1,6 @@
-import logoClipUrl from '../../audio/kidsudoku-japanese.mp3';
+import logoClipUrl from "../../audio/kidsudoku-japanese.mp3";
 
-export type HapticKind = 'tap' | 'wrong' | 'correct' | 'setComplete';
+export type HapticKind = "tap" | "wrong" | "correct" | "setComplete";
 
 const HAPTIC_PATTERNS: Record<HapticKind, number | number[]> = {
   tap: 10,
@@ -10,7 +10,7 @@ const HAPTIC_PATTERNS: Record<HapticKind, number | number[]> = {
 };
 
 export function triggerHaptic(kind: HapticKind): void {
-  if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
+  if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") {
     return;
   }
   try {
@@ -52,12 +52,11 @@ class SoundEngine {
   }
 
   private getContext(): AudioContext | null {
-    if (!this.enabled || typeof window === 'undefined') return null;
+    if (!this.enabled || typeof window === "undefined") return null;
 
     const AudioCtx =
       window.AudioContext ||
-      (window as unknown as { webkitAudioContext?: typeof AudioContext })
-        .webkitAudioContext;
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
 
     if (!AudioCtx) return null;
 
@@ -65,7 +64,7 @@ class SoundEngine {
       this.ctx = new AudioCtx();
     }
 
-    if (this.ctx.state === 'suspended') {
+    if (this.ctx.state === "suspended") {
       void this.ctx.resume();
     }
 
@@ -118,11 +117,11 @@ class SoundEngine {
     const gain = ctx.createGain();
     const overtoneGain = ctx.createGain();
 
-    osc.type = 'sine';
+    osc.type = "sine";
     osc.frequency.setValueAtTime(freq, startTime);
 
     // Subtle wooden harmonic decays quickly like a marimba bar
-    overtone.type = 'triangle';
+    overtone.type = "triangle";
     overtone.frequency.setValueAtTime(freq * 2, startTime);
 
     gain.gain.setValueAtTime(0.0001, startTime);
@@ -152,7 +151,7 @@ class SoundEngine {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
-    osc.type = 'sine';
+    osc.type = "sine";
     osc.frequency.setValueAtTime(360, now);
     osc.frequency.exponentialRampToValueAtTime(190, now + 0.045);
 
@@ -173,9 +172,7 @@ class SoundEngine {
 
     const now = ctx.currentTime;
     const notes =
-      streak >= 3
-        ? [523.25, 659.25, 783.99, 1046.5, 1318.5]
-        : [523.25, 659.25, 783.99, 1046.5];
+      streak >= 3 ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : [523.25, 659.25, 783.99, 1046.5];
 
     notes.forEach((freq, i) => {
       this.playMarimbaNote(ctx, freq, now + i * 0.065, 0.36, 0.13);
@@ -220,7 +217,7 @@ class SoundEngine {
   }
 
   playLogoClip(onFinish?: () => void): boolean {
-    if (!this.enabled || typeof window === 'undefined') {
+    if (!this.enabled || typeof window === "undefined") {
       return false;
     }
 
@@ -256,13 +253,13 @@ class SoundEngine {
     }
 
     // Immediate fallback via HTMLAudioElement on very first tap before decode finishes
-    if (typeof Audio === 'undefined') {
+    if (typeof Audio === "undefined") {
       return false;
     }
 
     if (!this.logoAudio) {
       this.logoAudio = new Audio(logoClipUrl);
-      this.logoAudio.preload = 'auto';
+      this.logoAudio.preload = "auto";
     }
 
     const audio = this.logoAudio;

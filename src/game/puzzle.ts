@@ -13,7 +13,7 @@ export interface Puzzle {
   givenEntries: Array<{ index: QuadrantIndex; value: number }>;
 }
 
-export type GuessStatus = 'correct' | 'too-high' | 'too-low';
+export type GuessStatus = "correct" | "too-high" | "too-low";
 
 export interface GuessEvaluation {
   status: GuessStatus;
@@ -47,14 +47,11 @@ function randomInt(maxExclusive: number, rng: () => number): number {
   return Math.min(maxExclusive - 1, Math.floor(rng() * maxExclusive));
 }
 
-function cellsSignature(cells: Puzzle['cells']): string {
-  return cells.map((c) => (c === null ? '?' : String(c))).join(',');
+function cellsSignature(cells: Puzzle["cells"]): string {
+  return cells.map((c) => (c === null ? "?" : String(c))).join(",");
 }
 
-export function generatePuzzle(
-  previous?: Puzzle,
-  rng: () => number = Math.random,
-): Puzzle {
+export function generatePuzzle(previous?: Puzzle, rng: () => number = Math.random): Puzzle {
   let chosenTuple: QuadTuple = ALL_COMPOSITIONS[0];
   let missingIndex: QuadrantIndex = 0;
 
@@ -64,25 +61,23 @@ export function generatePuzzle(
 
     if (!previous) break;
 
-    const candidateCells: Puzzle['cells'] = [
+    const candidateCells: Puzzle["cells"] = [
       missingIndex === 0 ? null : chosenTuple[0],
       missingIndex === 1 ? null : chosenTuple[1],
       missingIndex === 2 ? null : chosenTuple[2],
       missingIndex === 3 ? null : chosenTuple[3],
     ];
 
-    const sameBoard =
-      cellsSignature(candidateCells) === cellsSignature(previous.cells);
+    const sameBoard = cellsSignature(candidateCells) === cellsSignature(previous.cells);
     const sameSpotAndAnswer =
-      missingIndex === previous.missingIndex &&
-      chosenTuple[missingIndex] === previous.answer;
+      missingIndex === previous.missingIndex && chosenTuple[missingIndex] === previous.answer;
 
     if (!sameBoard && !sameSpotAndAnswer) {
       break;
     }
   }
 
-  const cells: Puzzle['cells'] = [
+  const cells: Puzzle["cells"] = [
     missingIndex === 0 ? null : chosenTuple[0],
     missingIndex === 1 ? null : chosenTuple[1],
     missingIndex === 2 ? null : chosenTuple[2],
@@ -115,11 +110,11 @@ export function evaluateGuess(puzzle: Puzzle, guess: number): GuessEvaluation {
   const diff = total - TARGET_SUM;
 
   if (diff === 0) {
-    return { status: 'correct', guess, total, diff };
+    return { status: "correct", guess, total, diff };
   }
 
   return {
-    status: diff > 0 ? 'too-high' : 'too-low',
+    status: diff > 0 ? "too-high" : "too-low",
     guess,
     total,
     diff,
@@ -129,10 +124,7 @@ export function evaluateGuess(puzzle: Puzzle, guess: number): GuessEvaluation {
 /**
  * Returns 3 distinct choices (including the correct answer) for gentle Hint Level 2.
  */
-export function getHintChoices(
-  puzzle: Puzzle,
-  rng: () => number = Math.random,
-): number[] {
+export function getHintChoices(puzzle: Puzzle, rng: () => number = Math.random): number[] {
   const answer = puzzle.answer;
   const candidates: number[] = [];
 
@@ -156,12 +148,12 @@ export function getHintChoices(
 }
 
 const GENERAL_PRAISE = [
-  'Makes 10!',
-  'Spot on!',
-  'Nice thinking!',
-  'Well done!',
-  'Great match!',
-  'Clever!',
+  "Makes 10!",
+  "Spot on!",
+  "Nice thinking!",
+  "Well done!",
+  "Great match!",
+  "Clever!",
 ];
 
 export function getCelebrationMessage(
@@ -170,7 +162,7 @@ export function getCelebrationMessage(
   justCompletedSet: boolean,
 ): string {
   if (justCompletedSet) {
-    return 'Set complete! 5 stars earned!';
+    return "Set complete! 5 stars earned!";
   }
   if (streak > 0 && streak % 10 === 0) {
     return `${streak} in a row — remarkable!`;
@@ -179,13 +171,13 @@ export function getCelebrationMessage(
     return `${streak} in a row!`;
   }
   if (attempts === 1 && streak >= 2) {
-    return 'First try — sharp!';
+    return "First try — sharp!";
   }
   return GENERAL_PRAISE[streak % GENERAL_PRAISE.length];
 }
 
 export function getWrongFeedback(evaluation: GuessEvaluation): string {
-  if (evaluation.status === 'too-high') {
+  if (evaluation.status === "too-high") {
     return `That makes ${evaluation.total} — try a smaller number`;
   }
   return `That makes ${evaluation.total} — try a bigger number`;

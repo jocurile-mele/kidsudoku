@@ -1,25 +1,24 @@
-import confetti from 'canvas-confetti';
+import confetti from "canvas-confetti";
 
 const PALETTE = [
-  '#E9A83A', // honey amber
-  '#4E9F7D', // sage mint
-  '#E06D53', // warm terracotta
-  '#5A8BB5', // soft sky slate
-  '#F2C96B', // sunlit gold
-  '#7BB99E', // meadow leaf
+  "#E9A83A", // honey amber
+  "#4E9F7D", // sage mint
+  "#E06D53", // warm terracotta
+  "#5A8BB5", // soft sky slate
+  "#F2C96B", // sunlit gold
+  "#7BB99E", // meadow leaf
 ];
 
 function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 export function fireSolvedConfetti(origin = { x: 0.5, y: 0.45 }) {
   if (prefersReducedMotion()) return;
 
-  confetti({
+  void confetti({
     particleCount: 38,
-    spread: 68,
     startVelocity: 28,
     decay: 0.91,
     scalar: 0.9,
@@ -39,7 +38,7 @@ export function fireSetCompleteConfetti() {
     ticks: 180,
   };
 
-  confetti({
+  void confetti({
     ...defaults,
     particleCount: 45,
     angle: 60,
@@ -48,7 +47,7 @@ export function fireSetCompleteConfetti() {
     origin: { x: 0.12, y: 0.68 },
   });
 
-  confetti({
+  void confetti({
     ...defaults,
     particleCount: 45,
     angle: 120,
@@ -58,13 +57,13 @@ export function fireSetCompleteConfetti() {
   });
 
   window.setTimeout(() => {
-    confetti({
+    void confetti({
       ...defaults,
       particleCount: 28,
       spread: 85,
       startVelocity: 30,
       scalar: 1.15,
-      shapes: ['star', 'circle'],
+      shapes: ["star", "circle"],
       origin: { x: 0.5, y: 0.42 },
     });
   }, 180);

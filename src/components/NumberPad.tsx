@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from "motion/react";
 
 const TOP_ROW = [0, 1, 2, 3, 4, 5] as const;
 const BOTTOM_ROW = [6, 7, 8, 9, 10] as const;
@@ -11,13 +11,7 @@ interface NumberPadProps {
   hintChoices: readonly number[] | null;
 }
 
-export function NumberPad({
-  onSelect,
-  triedWrong,
-  solved,
-  answer,
-  hintChoices,
-}: NumberPadProps) {
+export function NumberPad({ onSelect, triedWrong, solved, answer, hintChoices }: NumberPadProps) {
   const renderKey = (digit: number) => {
     const isTriedWrong = triedWrong.has(digit);
     const isWinningKey = solved && digit === answer;
@@ -27,17 +21,17 @@ export function NumberPad({
       !solved && !isTriedWrong && hintChoices !== null && !hintChoices.includes(digit);
     const disabled = solved || isTriedWrong;
 
-    let styleClass = 'num-key border-[#e4dac6] text-ink';
+    let styleClass = "num-key border-[#e4dac6] text-ink";
     if (isWinningKey) {
-      styleClass = 'num-key-correct border-sage text-sage-deep';
+      styleClass = "num-key-correct border-sage text-sage-deep";
     } else if (isTriedWrong) {
-      styleClass = 'num-key-tried border-[#e5dccb] text-[#b4a895] opacity-55';
+      styleClass = "num-key-tried border-[#e5dccb] text-[#b4a895] opacity-55";
     } else if (isHintCandidate) {
-      styleClass = 'num-key-hint border-amber-warm text-amber-deep';
+      styleClass = "num-key-hint border-amber-warm text-amber-deep";
     } else if (isDimmedByHint) {
-      styleClass = 'num-key border-[#e4dac6] text-ink opacity-40';
+      styleClass = "num-key border-[#e4dac6] text-ink opacity-40";
     } else if (solved) {
-      styleClass = 'num-key border-[#e4dac6] text-ink opacity-45';
+      styleClass = "num-key border-[#e4dac6] text-ink opacity-45";
     }
 
     return (
@@ -54,10 +48,10 @@ export function NumberPad({
               ? { scale: [1, 1.04, 1] }
               : { scale: 1 }
         }
-        transition={{ type: 'spring', stiffness: 520, damping: 22 }}
+        transition={{ type: "spring", stiffness: 520, damping: 22 }}
         aria-label={`Choose ${digit}`}
         className={`relative w-[clamp(42px,13.4vw,58px)] h-[clamp(46px,13vw,60px)] [@media(max-height:700px)]:h-[46px] [@media(orientation:landscape)_and_(max-height:520px)]:w-[46px] [@media(orientation:landscape)_and_(max-height:520px)]:h-[44px] [@media(orientation:landscape)_and_(max-height:520px)]:text-xl rounded-2xl border font-display text-[22px] sm:text-[26px] font-bold flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
-          disabled ? 'cursor-default' : 'cursor-pointer'
+          disabled ? "cursor-default" : "cursor-pointer"
         } ${styleClass}`}
       >
         {digit}

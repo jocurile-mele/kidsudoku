@@ -1,27 +1,27 @@
-import { motion } from 'motion/react';
-import { TARGET_SUM, type Puzzle } from '../game/puzzle';
+import { motion } from "motion/react";
+import { TARGET_SUM, type Puzzle } from "../game/puzzle";
 
 export const HINT_GROUP_STYLES = [
   {
-    name: 'cobalt',
-    dot: 'bg-[#3B7DD8]',
-    ring: 'ring-[#3B7DD8]/35',
-    badge: 'bg-[#eaf2fc] text-[#285da8] border-[#c2d8f5]',
-    bead: 'bg-gradient-to-b from-[#5694E8] to-[#3271C8] shadow-[0_2px_0_#235296]',
+    name: "cobalt",
+    dot: "bg-[#3B7DD8]",
+    ring: "ring-[#3B7DD8]/35",
+    badge: "bg-[#eaf2fc] text-[#285da8] border-[#c2d8f5]",
+    bead: "bg-gradient-to-b from-[#5694E8] to-[#3271C8] shadow-[0_2px_0_#235296]",
   },
   {
-    name: 'orange',
-    dot: 'bg-[#EC7B29]',
-    ring: 'ring-[#EC7B29]/35',
-    badge: 'bg-[#fef1e6] text-[#b5500d] border-[#f6cfa9]',
-    bead: 'bg-gradient-to-b from-[#F69346] to-[#E16B1C] shadow-[0_2px_0_#B44F0E]',
+    name: "orange",
+    dot: "bg-[#EC7B29]",
+    ring: "ring-[#EC7B29]/35",
+    badge: "bg-[#fef1e6] text-[#b5500d] border-[#f6cfa9]",
+    bead: "bg-gradient-to-b from-[#F69346] to-[#E16B1C] shadow-[0_2px_0_#B44F0E]",
   },
   {
-    name: 'plum',
-    dot: 'bg-[#9B51B6]',
-    ring: 'ring-[#9B51B6]/35',
-    badge: 'bg-[#f6ecf9] text-[#6d3185] border-[#dec1ea]',
-    bead: 'bg-gradient-to-b from-[#B06BCA] to-[#8A42A6] shadow-[0_2px_0_#662B7E]',
+    name: "plum",
+    dot: "bg-[#9B51B6]",
+    ring: "ring-[#9B51B6]/35",
+    badge: "bg-[#f6ecf9] text-[#6d3185] border-[#dec1ea]",
+    bead: "bg-gradient-to-b from-[#B06BCA] to-[#8A42A6] shadow-[0_2px_0_#662B7E]",
   },
 ] as const;
 
@@ -50,7 +50,7 @@ export function TenFrameHint({ puzzle, hintLevel, solved }: TenFrameHintProps) {
   return (
     <motion.div
       initial={{ opacity: 0, height: 0, y: -6 }}
-      animate={{ opacity: 1, height: 'auto', y: 0 }}
+      animate={{ opacity: 1, height: "auto", y: 0 }}
       exit={{ opacity: 0, height: 0, y: -6 }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
       className="overflow-hidden w-full max-w-[300px] mx-auto"
@@ -63,7 +63,7 @@ export function TenFrameHint({ puzzle, hintLevel, solved }: TenFrameHintProps) {
           <span className="font-display text-xs font-semibold text-ink-soft">
             {hintLevel >= 2 ? (
               <span>
-                {puzzle.givenEntries.map((e) => e.value).join(' + ')} ={' '}
+                {puzzle.givenEntries.map((e) => e.value).join(" + ")} ={" "}
                 <strong className="text-ink">{puzzle.givenSum}</strong>
               </span>
             ) : solved ? (
@@ -99,7 +99,7 @@ export function TenFrameHint({ puzzle, hintLevel, solved }: TenFrameHintProps) {
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{
-                      type: 'spring',
+                      type: "spring",
                       stiffness: 420,
                       damping: 20,
                       delay: i * 0.03,
@@ -111,7 +111,7 @@ export function TenFrameHint({ puzzle, hintLevel, solved }: TenFrameHintProps) {
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{
-                      type: 'spring',
+                      type: "spring",
                       stiffness: 420,
                       damping: 18,
                       delay: (i - puzzle.givenSum) * 0.05,

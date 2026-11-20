@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from "vite-plus/test";
 import {
   ALL_COMPOSITIONS,
   TARGET_SUM,
@@ -7,10 +7,10 @@ import {
   getHintChoices,
   getWrongFeedback,
   type Puzzle,
-} from './puzzle';
+} from "./puzzle";
 
-describe('puzzle generation & rules', () => {
-  it('enumerates all 286 weak compositions of 10 into 4 parts', () => {
+describe("puzzle generation & rules", () => {
+  it("enumerates all 286 weak compositions of 10 into 4 parts", () => {
     expect(ALL_COMPOSITIONS).toHaveLength(286);
     for (const tuple of ALL_COMPOSITIONS) {
       expect(tuple).toHaveLength(4);
@@ -23,7 +23,7 @@ describe('puzzle generation & rules', () => {
     }
   });
 
-  it('always produces a valid 2x2 puzzle with 3 given quadrants summing with answer to 10', () => {
+  it("always produces a valid 2x2 puzzle with 3 given quadrants summing with answer to 10", () => {
     let sawZero = false;
     let sawRepeat = false;
     const seenMissingIndices = new Set<number>();
@@ -52,7 +52,7 @@ describe('puzzle generation & rules', () => {
     expect(seenMissingIndices.size).toBe(4);
   });
 
-  it('avoids repeating the exact same board back-to-back', () => {
+  it("avoids repeating the exact same board back-to-back", () => {
     let prev = generatePuzzle();
     for (let i = 0; i < 100; i++) {
       const next = generatePuzzle(prev);
@@ -61,9 +61,9 @@ describe('puzzle generation & rules', () => {
     }
   });
 
-  it('evaluates guesses accurately including 0 and 10 boundaries', () => {
+  it("evaluates guesses accurately including 0 and 10 boundaries", () => {
     const puzzleZeroAnswer: Puzzle = {
-      id: 'p1',
+      id: "p1",
       cells: [4, 3, 3, null],
       missingIndex: 3,
       answer: 0,
@@ -76,18 +76,18 @@ describe('puzzle generation & rules', () => {
     };
 
     expect(evaluateGuess(puzzleZeroAnswer, 0)).toEqual({
-      status: 'correct',
+      status: "correct",
       guess: 0,
       total: 10,
       diff: 0,
     });
     const highEval = evaluateGuess(puzzleZeroAnswer, 2);
-    expect(highEval.status).toBe('too-high');
+    expect(highEval.status).toBe("too-high");
     expect(highEval.total).toBe(12);
-    expect(getWrongFeedback(highEval)).toContain('12');
+    expect(getWrongFeedback(highEval)).toContain("12");
 
     const puzzleTenAnswer: Puzzle = {
-      id: 'p2',
+      id: "p2",
       cells: [null, 0, 0, 0],
       missingIndex: 0,
       answer: 10,
@@ -99,14 +99,14 @@ describe('puzzle generation & rules', () => {
       ],
     };
 
-    expect(evaluateGuess(puzzleTenAnswer, 10).status).toBe('correct');
+    expect(evaluateGuess(puzzleTenAnswer, 10).status).toBe("correct");
     const lowEval = evaluateGuess(puzzleTenAnswer, 7);
-    expect(lowEval.status).toBe('too-low');
+    expect(lowEval.status).toBe("too-low");
     expect(lowEval.total).toBe(7);
-    expect(getWrongFeedback(lowEval)).toContain('7');
+    expect(getWrongFeedback(lowEval)).toContain("7");
   });
 
-  it('returns 3 unique valid sorted hint choices including the answer at edges', () => {
+  it("returns 3 unique valid sorted hint choices including the answer at edges", () => {
     for (const answer of [0, 1, 5, 9, 10]) {
       const puzzle: Puzzle = {
         id: `edge-${answer}`,

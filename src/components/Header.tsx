@@ -1,5 +1,5 @@
-import { motion } from 'motion/react';
-import { Flame, HelpCircle, Star, Volume2, VolumeX } from 'lucide-react';
+import { motion } from "motion/react";
+import { Flame, HelpCircle, Star, Volume2, VolumeX } from "lucide-react";
 
 interface HeaderProps {
   totalSolved: number;
@@ -31,9 +31,9 @@ export function Header({
         type="button"
         onClick={onLogoClick}
         whileTap={{ scale: 0.96 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 24 }}
+        transition={{ type: "spring", stiffness: 500, damping: 24 }}
         aria-label="Play KidSudoku voice clip"
-        title={soundEnabled ? 'Tap to play KidSudoku sound' : 'Unmute sound to play'}
+        title={soundEnabled ? "Tap to play KidSudoku sound" : "Unmute sound to play"}
         className="group flex items-center gap-2 sm:gap-2.5 text-left rounded-2xl pr-1.5 sm:pr-2 -ml-1 p-1 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm shrink-0"
       >
         <motion.div
@@ -48,11 +48,11 @@ export function Header({
                 }
               : { rotate: 0, scale: 1 }
           }
-          transition={{ duration: 0.45, ease: 'easeInOut' }}
+          transition={{ duration: 0.45, ease: "easeInOut" }}
           className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#efe7d7] p-1.5 grid grid-cols-2 gap-1 shadow-[inset_0_1px_3px_rgba(92,76,48,0.14),0_2px_6px_rgba(92,76,48,0.08)] transition-all duration-200 ${
             logoPlaying
-              ? 'ring-3 ring-amber-warm/50 bg-[#f6ecd7]'
-              : '[@media(hover:hover)]:group-hover:ring-2 [@media(hover:hover)]:group-hover:ring-amber-warm/30'
+              ? "ring-3 ring-amber-warm/50 bg-[#f6ecd7]"
+              : "[@media(hover:hover)]:group-hover:ring-2 [@media(hover:hover)]:group-hover:ring-amber-warm/30"
           }`}
         >
           <span className="rounded-[4px] bg-[#fffdf9] shadow-[0_1px_0_#d8ccb6]" />
@@ -60,9 +60,7 @@ export function Header({
           <span className="rounded-[4px] bg-[#fffdf9] shadow-[0_1px_0_#d8ccb6]" />
           <span
             className={`rounded-[4px] border border-dashed transition-colors ${
-              logoPlaying
-                ? 'bg-sage-wash border-sage'
-                : 'bg-[#fdecc8] border-[#e5a63a]'
+              logoPlaying ? "bg-sage-wash border-sage" : "bg-[#fdecc8] border-[#e5a63a]"
             }`}
           />
         </motion.div>
@@ -70,9 +68,7 @@ export function Header({
           <h1 className="font-display text-lg sm:text-2xl font-bold tracking-tight text-ink">
             KidSudoku
           </h1>
-          <p className="text-[11px] font-bold tracking-[0.12em] text-ink-soft">
-            calmstead
-          </p>
+          <p className="text-[11px] font-bold tracking-[0.12em] text-ink-soft">calmstead</p>
         </div>
       </motion.button>
 
@@ -83,7 +79,7 @@ export function Header({
           key={`stars-${totalSolved}`}
           initial={{ scale: 0.92 }}
           animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 460, damping: 20 }}
+          transition={{ type: "spring", stiffness: 460, damping: 20 }}
           className="flex items-center gap-1 sm:gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-full bg-cream border border-[#e6dcc9] shadow-[0_2px_0_#e3d9c5]"
           title={`${totalSolved} puzzles solved`}
         >
@@ -98,32 +94,28 @@ export function Header({
           key={`streak-${streak}`}
           initial={streak > 0 ? { scale: 0.88 } : false}
           animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 460, damping: 18 }}
+          transition={{ type: "spring", stiffness: 460, damping: 18 }}
           className={`flex items-center gap-1 h-8 sm:h-9 px-2.5 sm:px-3 rounded-full border transition-colors ${
             streak >= 3
-              ? 'bg-amber-wash border-[#ecc270] shadow-[0_2px_0_#e4be73] text-amber-deep'
-              : 'bg-cream border-[#e6dcc9] shadow-[0_2px_0_#e3d9c5] text-ink'
+              ? "bg-amber-wash border-[#ecc270] shadow-[0_2px_0_#e4be73] text-amber-deep"
+              : "bg-cream border-[#e6dcc9] shadow-[0_2px_0_#e3d9c5] text-ink"
           }`}
           title={`Current streak: ${streak} (Best: ${bestStreak})`}
         >
           <Flame
             className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors ${
-              streak > 0
-                ? 'text-coral fill-amber-warm'
-                : 'text-[#bfb5a4]'
+              streak > 0 ? "text-coral fill-amber-warm" : "text-[#bfb5a4]"
             }`}
           />
-          <span className="font-display text-sm sm:text-base font-semibold">
-            {streak}
-          </span>
+          <span className="font-display text-sm sm:text-base font-semibold">{streak}</span>
         </motion.div>
 
         {/* Sound toggle */}
         <button
           type="button"
           onClick={onToggleSound}
-          aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
-          title={soundEnabled ? 'Sound on (M)' : 'Sound muted (M)'}
+          aria-label={soundEnabled ? "Mute sound effects" : "Enable sound effects"}
+          title={soundEnabled ? "Sound on (M)" : "Sound muted (M)"}
           className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-cream border border-[#e6dcc9] shadow-[0_2px_0_#e3d9c5] text-ink-soft [@media(hover:hover)]:hover:text-ink [@media(hover:hover)]:hover:bg-[#fffaf0] active:translate-y-[1px] transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
         >
           {soundEnabled ? (

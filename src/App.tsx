@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, MotionConfig, motion } from 'motion/react';
-import { ArrowRight, Lightbulb, RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import { ArrowRight, Lightbulb, RefreshCw } from "lucide-react";
 import {
   SET_SIZE,
   TARGET_SUM,
@@ -10,21 +10,21 @@ import {
   getHintChoices,
   getWrongFeedback,
   type Puzzle,
-} from './game/puzzle';
-import { soundEngine, triggerHaptic } from './game/sound';
-import { fireSetCompleteConfetti, fireSolvedConfetti } from './game/confetti';
-import { loadProgress, saveProgress, type PersistedProgress } from './game/storage';
-import { Header } from './components/Header';
-import { StarTrack } from './components/StarTrack';
-import { PuzzleBoard } from './components/PuzzleBoard';
-import { TenFrameHint } from './components/TenFrameHint';
-import { NumberPad } from './components/NumberPad';
-import { HowToPlayModal } from './components/HowToPlayModal';
+} from "./game/puzzle";
+import { soundEngine, triggerHaptic } from "./game/sound";
+import { fireSetCompleteConfetti, fireSolvedConfetti } from "./game/confetti";
+import { loadProgress, saveProgress, type PersistedProgress } from "./game/storage";
+import { Header } from "./components/Header";
+import { StarTrack } from "./components/StarTrack";
+import { PuzzleBoard } from "./components/PuzzleBoard";
+import { TenFrameHint } from "./components/TenFrameHint";
+import { NumberPad } from "./components/NumberPad";
+import { HowToPlayModal } from "./components/HowToPlayModal";
 
 type FeedbackState =
-  | { kind: 'idle' }
-  | { kind: 'wrong'; message: string }
-  | { kind: 'solved'; message: string; justCompletedSet: boolean };
+  | { kind: "idle" }
+  | { kind: "wrong"; message: string }
+  | { kind: "solved"; message: string; justCompletedSet: boolean };
 
 export default function App() {
   const [progress, setProgress] = useState<PersistedProgress>(() => {
@@ -41,7 +41,7 @@ export default function App() {
   const [triedWrong, setTriedWrong] = useState<Set<number>>(() => new Set());
   const [wrongGuess, setWrongGuess] = useState<number | null>(null);
   const [wrongAttemptKey, setWrongAttemptKey] = useState(0);
-  const [feedback, setFeedback] = useState<FeedbackState>({ kind: 'idle' });
+  const [feedback, setFeedback] = useState<FeedbackState>({ kind: "idle" });
   const [hintLevel, setHintLevel] = useState<0 | 1 | 2>(0);
   const [hintChoices, setHintChoices] = useState<number[] | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -64,10 +64,10 @@ export default function App() {
   useEffect(() => {
     const unlockOnce = () => {
       soundEngine.unlock();
-      window.removeEventListener('pointerdown', unlockOnce);
+      window.removeEventListener("pointerdown", unlockOnce);
     };
-    window.addEventListener('pointerdown', unlockOnce, { passive: true });
-    return () => window.removeEventListener('pointerdown', unlockOnce);
+    window.addEventListener("pointerdown", unlockOnce, { passive: true });
+    return () => window.removeEventListener("pointerdown", unlockOnce);
   }, []);
 
   const clearTimers = useCallback(() => {
@@ -95,7 +95,7 @@ export default function App() {
       setAttemptsThisRound(0);
       setTriedWrong(new Set());
       setWrongGuess(null);
-      setFeedback({ kind: 'idle' });
+      setFeedback({ kind: "idle" });
       setHintLevel(0);
       setHintChoices(null);
       setPendingTensDigit(false);
@@ -131,7 +131,7 @@ export default function App() {
       const nextAttempts = attemptsThisRound + 1;
       setAttemptsThisRound(nextAttempts);
 
-      if (evaluation.status === 'correct') {
+      if (evaluation.status === "correct") {
         if (wrongClearTimerRef.current !== null) {
           window.clearTimeout(wrongClearTimerRef.current);
           wrongClearTimerRef.current = null;
@@ -150,25 +150,19 @@ export default function App() {
           ...prev,
           totalSolved: prev.totalSolved + 1,
           bestStreak: Math.max(prev.bestStreak, nextStreak),
-          setsCompleted: justCompletedSet
-            ? prev.setsCompleted + 1
-            : prev.setsCompleted,
+          setsCompleted: justCompletedSet ? prev.setsCompleted + 1 : prev.setsCompleted,
         }));
 
-        const message = getCelebrationMessage(
-          nextStreak,
-          nextAttempts,
-          justCompletedSet,
-        );
-        setFeedback({ kind: 'solved', message, justCompletedSet });
+        const message = getCelebrationMessage(nextStreak, nextAttempts, justCompletedSet);
+        setFeedback({ kind: "solved", message, justCompletedSet });
 
         if (justCompletedSet || (nextStreak > 0 && nextStreak % 5 === 0)) {
           soundEngine.playSetComplete();
-          triggerHaptic('setComplete');
+          triggerHaptic("setComplete");
           fireSetCompleteConfetti();
         } else {
           soundEngine.playCorrect(nextStreak);
-          triggerHaptic('correct');
+          triggerHaptic("correct");
           fireSolvedConfetti(getBoardOrigin());
         }
 
@@ -178,7 +172,7 @@ export default function App() {
         }, delayMs);
       } else {
         soundEngine.playWrong();
-        triggerHaptic('wrong');
+        triggerHaptic("wrong");
         setStreak(0);
         setWrongGuess(digit);
         setWrongAttemptKey((k) => k + 1);
@@ -187,7 +181,7 @@ export default function App() {
           next.add(digit);
           return next;
         });
-        setFeedback({ kind: 'wrong', message: getWrongFeedback(evaluation) });
+        setFeedback({ kind: "wrong", message: getWrongFeedback(evaluation) });
 
         if (wrongClearTimerRef.current !== null) {
           window.clearTimeout(wrongClearTimerRef.current);
@@ -213,7 +207,7 @@ export default function App() {
   const handleHint = useCallback(() => {
     if (solved || hintLevel >= 2) return;
     soundEngine.playHint();
-    triggerHaptic('tap');
+    triggerHaptic("tap");
 
     if (hintLevel === 0) {
       setHintLevel(1);
@@ -225,12 +219,12 @@ export default function App() {
 
   const handleSkip = useCallback(() => {
     soundEngine.playTap();
-    triggerHaptic('tap');
+    triggerHaptic("tap");
     startNextPuzzle(false);
   }, [startNextPuzzle]);
 
   const handleToggleSound = useCallback(() => {
-    triggerHaptic('tap');
+    triggerHaptic("tap");
     setProgress((prev) => {
       const nextEnabled = !prev.soundEnabled;
       soundEngine.setEnabled(nextEnabled);
@@ -244,7 +238,7 @@ export default function App() {
   }, []);
 
   const handleLogoClick = useCallback(() => {
-    triggerHaptic('tap');
+    triggerHaptic("tap");
     setLogoPressCount((c) => c + 1);
     const started = soundEngine.playLogoClip(() => {
       setLogoPlaying(false);
@@ -260,31 +254,31 @@ export default function App() {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
       if (helpOpen) {
-        if (e.key === 'Escape') {
+        if (e.key === "Escape") {
           setHelpOpen(false);
         }
         return;
       }
 
-      if (e.key === 'm' || e.key === 'M') {
+      if (e.key === "m" || e.key === "M") {
         handleToggleSound();
         return;
       }
 
-      if (e.key === 'h' || e.key === 'H') {
+      if (e.key === "h" || e.key === "H") {
         handleHint();
         return;
       }
 
       if (solved) {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           startNextPuzzle(starsInSet >= SET_SIZE);
         }
         return;
       }
 
-      if (e.key >= '0' && e.key <= '9') {
+      if (e.key >= "0" && e.key <= "9") {
         const digit = Number(e.key);
 
         if (pendingTensDigit) {
@@ -317,8 +311,8 @@ export default function App() {
       }
     };
 
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [
     handleHint,
     handleSelectNumber,
@@ -331,9 +325,7 @@ export default function App() {
     startNextPuzzle,
   ]);
 
-  const completedNumbers = puzzle.cells.map((c) =>
-    c === null ? puzzle.answer : c,
-  );
+  const completedNumbers = puzzle.cells.map((c) => (c === null ? puzzle.answer : c));
 
   return (
     <MotionConfig reducedMotion="user">
@@ -349,7 +341,7 @@ export default function App() {
           onToggleSound={handleToggleSound}
           onOpenHelp={() => {
             soundEngine.playTap();
-            triggerHaptic('tap');
+            triggerHaptic("tap");
             setHelpOpen(true);
           }}
         />
@@ -357,10 +349,7 @@ export default function App() {
         <main className="flex-1 w-full max-w-xl mx-auto px-3 sm:px-4 flex flex-col items-center justify-center gap-2.5 sm:gap-3.5 py-1 [@media(orientation:landscape)_and_(max-height:520px)]:max-w-3xl [@media(orientation:landscape)_and_(max-height:520px)]:grid [@media(orientation:landscape)_and_(max-height:520px)]:grid-cols-[auto_1fr] [@media(orientation:landscape)_and_(max-height:520px)]:items-center [@media(orientation:landscape)_and_(max-height:520px)]:gap-5">
           {/* Left column in mobile landscape: StarTrack + 2x2 Board */}
           <div className="w-full flex flex-col items-center gap-2.5 sm:gap-3">
-            <StarTrack
-              starsInSet={starsInSet}
-              setsCompleted={progress.setsCompleted}
-            />
+            <StarTrack starsInSet={starsInSet} setsCompleted={progress.setsCompleted} />
 
             <PuzzleBoard
               puzzle={puzzle}
@@ -378,28 +367,26 @@ export default function App() {
             {/* Stable-height Feedback / Equation Bar */}
             <div className="w-full max-w-md min-h-[38px] sm:min-h-[42px] flex items-center justify-center">
               <AnimatePresence mode="wait">
-                {feedback.kind === 'solved' ? (
+                {feedback.kind === "solved" ? (
                   <motion.div
                     key={`solved-${puzzle.id}`}
                     initial={{ opacity: 0, y: 6, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                    transition={{ type: 'spring', stiffness: 460, damping: 24 }}
+                    transition={{ type: "spring", stiffness: 460, damping: 24 }}
                     className="flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 rounded-2xl bg-sage-wash border border-[#b2dec9] text-sage-deep shadow-xs"
                   >
                     <span className="font-display text-sm sm:text-base font-bold">
                       {completedNumbers.map((n, idx) => (
                         <span key={idx}>
                           {idx > 0 && (
-                            <span className="mx-1 opacity-55 font-sans font-bold">
-                              +
-                            </span>
+                            <span className="mx-1 opacity-55 font-sans font-bold">+</span>
                           )}
                           <span
                             className={
                               idx === puzzle.missingIndex
-                                ? 'inline-block px-1.5 py-0.5 rounded-md bg-sage text-white leading-none'
-                                : ''
+                                ? "inline-block px-1.5 py-0.5 rounded-md bg-sage text-white leading-none"
+                                : ""
                             }
                           >
                             {n}
@@ -421,7 +408,7 @@ export default function App() {
                       <ArrowRight className="w-3 h-3" />
                     </button>
                   </motion.div>
-                ) : feedback.kind === 'wrong' ? (
+                ) : feedback.kind === "wrong" ? (
                   <motion.div
                     key={`wrong-${wrongAttemptKey}`}
                     initial={{ opacity: 0, y: 4, scale: 0.96 }}
@@ -444,12 +431,11 @@ export default function App() {
                   >
                     {hintLevel === 2 ? (
                       <span>
-                        Highlighted{' '}
-                        <strong className="text-amber-deep">3 choices</strong>{' '}
-                        below — which one makes 10?
+                        Highlighted <strong className="text-amber-deep">3 choices</strong> below —
+                        which one makes 10?
                       </span>
                     ) : (
-                      'Tap the number that belongs in the glowing square'
+                      "Tap the number that belongs in the glowing square"
                     )}
                   </motion.p>
                 )}
@@ -459,11 +445,7 @@ export default function App() {
             {/* Expandable Ten-Frame Visual Hint */}
             <AnimatePresence>
               {hintLevel >= 1 && (
-                <TenFrameHint
-                  puzzle={puzzle}
-                  hintLevel={hintLevel}
-                  solved={solved}
-                />
+                <TenFrameHint puzzle={puzzle} hintLevel={hintLevel} solved={solved} />
               )}
             </AnimatePresence>
 
@@ -484,19 +466,15 @@ export default function App() {
                 disabled={solved || hintLevel >= 2}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold border transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
                   solved || hintLevel >= 2
-                    ? 'bg-[#f4eee2] border-[#e6decb] text-[#b4a996] cursor-default'
+                    ? "bg-[#f4eee2] border-[#e6decb] text-[#b4a996] cursor-default"
                     : hintLevel === 1
-                      ? 'bg-amber-wash border-[#ecc270] text-amber-deep shadow-[0_2px_0_#e4be73] [@media(hover:hover)]:hover:brightness-98 active:translate-y-[1px]'
-                      : 'bg-cream border-[#e5dac6] text-ink-soft shadow-[0_2px_0_#e1d6c1] [@media(hover:hover)]:hover:text-ink [@media(hover:hover)]:hover:bg-[#fffaf0] active:translate-y-[1px]'
+                      ? "bg-amber-wash border-[#ecc270] text-amber-deep shadow-[0_2px_0_#e4be73] [@media(hover:hover)]:hover:brightness-98 active:translate-y-[1px]"
+                      : "bg-cream border-[#e5dac6] text-ink-soft shadow-[0_2px_0_#e1d6c1] [@media(hover:hover)]:hover:text-ink [@media(hover:hover)]:hover:bg-[#fffaf0] active:translate-y-[1px]"
                 }`}
               >
                 <Lightbulb className="w-4 h-4" />
                 <span>
-                  {hintLevel === 0
-                    ? 'Hint'
-                    : hintLevel === 1
-                      ? 'Narrow choices'
-                      : 'Hint shown'}
+                  {hintLevel === 0 ? "Hint" : hintLevel === 1 ? "Narrow choices" : "Hint shown"}
                 </span>
               </button>
 
