@@ -5,7 +5,7 @@ description: Synthesize and balance Web Audio API sound effects (OscillatorNode 
 
 # Web Audio SFX
 
-Reference and recipe for procedural Web Audio API sound effects in this repo (`src/game/sound.ts`).
+Reference and recipe for procedural Web Audio API sound effects in this repo (`src/platform/sound.ts`).
 
 ## Synthesized SFX vs. audio files
 

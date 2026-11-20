@@ -1,19 +1,97 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { TargetSum } from "../game/puzzle";
-import { soundEngine } from "../game/sound";
-import { STAMPS, type StampDefinition, type StampId, type ThemeId } from "../game/stamps";
-import {
-  getTotalRewardCount,
-  loadProgress,
-  saveProgress,
-  type PersistedProgress,
-} from "../game/storage";
+import { STAMPS, THEMES, type StampDefinition, type StampId, type ThemeId } from "../game/stamps";
+import { soundEngine } from "../platform/sound";
+import { readJsonStorage, writeJsonStorage } from "../platform/storage";
+import { useManagedTimers } from "../platform/timers";
+
+export interface PersistedProgress {
+  totalSolved: number;
+  bestStreak: number;
+  setsCompleted: number;
+  sudoku4x4Solved: number;
+  soundEnabled: boolean;
+  pipsEnabled: boolean;
+  targetSum: TargetSum;
+  theme: ThemeId;
+  pinnedStampId: StampId | null;
+  dailyCompletedDates: string[];
+  seenRewardCount: number;
+}
+
+const STORAGE_KEY = "kidsudoku-make10-progress-v1";
+
+const DEFAULT_PROGRESS: PersistedProgress = {
+  totalSolved: 0,
+  bestStreak: 0,
+  setsCompleted: 0,
+  sudoku4x4Solved: 0,
+  soundEnabled: true,
+  pipsEnabled: false,
+  targetSum: 10,
+  theme: "warm-paper",
+  pinnedStampId: null,
+  dailyCompletedDates: [],
+  seenRewardCount: 0,
+};
+
+const VALID_THEMES = new Set<string>(THEMES.map((t) => t.id));
+const VALID_STAMPS = new Set<string>(STAMPS.map((s) => s.id));
+const VALID_TARGET_SUMS = new Set<number>([5, 10, 20]);
 
 const THEME_META_COLORS: Record<ThemeId, string> = {
   "warm-paper": "#FBF7EF",
   "matcha-garden": "#F2F7F0",
   "cozy-dusk": "#1D222E",
 };
+
+export function getTotalRewardCount(progress: PersistedProgress): number {
+  return progress.setsCompleted + progress.dailyCompletedDates.length + progress.sudoku4x4Solved;
+}
+
+function parsePersistedProgress(raw: unknown): PersistedProgress {
+  if (!raw || typeof raw !== "object") return DEFAULT_PROGRESS;
+  const parsed = raw as Partial<PersistedProgress>;
+  return {
+    totalSolved:
+      typeof parsed.totalSolved === "number" && parsed.totalSolved >= 0
+        ? Math.floor(parsed.totalSolved)
+        : 0,
+    bestStreak:
+      typeof parsed.bestStreak === "number" && parsed.bestStreak >= 0
+        ? Math.floor(parsed.bestStreak)
+        : 0,
+    setsCompleted:
+      typeof parsed.setsCompleted === "number" && parsed.setsCompleted >= 0
+        ? Math.floor(parsed.setsCompleted)
+        : 0,
+    sudoku4x4Solved:
+      typeof parsed.sudoku4x4Solved === "number" && parsed.sudoku4x4Solved >= 0
+        ? Math.floor(parsed.sudoku4x4Solved)
+        : 0,
+    soundEnabled: typeof parsed.soundEnabled === "boolean" ? parsed.soundEnabled : true,
+    pipsEnabled: typeof parsed.pipsEnabled === "boolean" ? parsed.pipsEnabled : false,
+    targetSum:
+      typeof parsed.targetSum === "number" && VALID_TARGET_SUMS.has(parsed.targetSum)
+        ? (parsed.targetSum as TargetSum)
+        : 10,
+    theme:
+      typeof parsed.theme === "string" && VALID_THEMES.has(parsed.theme)
+        ? (parsed.theme as ThemeId)
+        : "warm-paper",
+    pinnedStampId:
+      typeof parsed.pinnedStampId === "string" && VALID_STAMPS.has(parsed.pinnedStampId)
+        ? (parsed.pinnedStampId as StampId)
+        : null,
+    dailyCompletedDates: Array.isArray(parsed.dailyCompletedDates)
+      ? parsed.dailyCompletedDates.filter((d): d is string => typeof d === "string").slice(-60)
+      : [],
+    seenRewardCount:
+      typeof parsed.seenRewardCount === "number" && parsed.seenRewardCount >= 0
+        ? Math.floor(parsed.seenRewardCount)
+        : 0,
+  };
+}
 
 export interface SolveRecordInput {
   kind: "2x2" | "daily" | "sudoku-4x4";
@@ -84,20 +162,20 @@ export interface ProgressStore {
  */
 export function useProgress(todayKey: string): ProgressStore {
   const [progress, setProgress] = useState<PersistedProgress>(() => {
-    const loaded = loadProgress();
+    const loaded = readJsonStorage(STORAGE_KEY, DEFAULT_PROGRESS, parsePersistedProgress);
     soundEngine.setEnabled(loaded.soundEnabled);
     return loaded;
   });
 
   const [unlockedToast, setUnlockedToast] = useState<StampDefinition | null>(null);
-  const toastTimerRef = useRef<number | null>(null);
+  const timers = useManagedTimers();
 
   const rewardCount = getTotalRewardCount(progress);
   const hasUnseenReward = rewardCount > progress.seenRewardCount;
   const dailyCompletedToday = progress.dailyCompletedDates.includes(todayKey);
 
   useEffect(() => {
-    saveProgress(progress);
+    writeJsonStorage(STORAGE_KEY, progress);
     soundEngine.setEnabled(progress.soundEnabled);
     document.documentElement.setAttribute("data-theme", progress.theme);
     const meta = document.querySelector('meta[name="theme-color"]');
@@ -106,32 +184,18 @@ export function useProgress(todayKey: string): ProgressStore {
     }
   }, [progress]);
 
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current !== null) {
-        window.clearTimeout(toastTimerRef.current);
-      }
-    };
-  }, []);
-
-  const showStampToast = useCallback((stamp: StampDefinition) => {
-    setUnlockedToast(stamp);
-    if (toastTimerRef.current !== null) {
-      window.clearTimeout(toastTimerRef.current);
-    }
-    toastTimerRef.current = window.setTimeout(() => {
-      setUnlockedToast(null);
-      toastTimerRef.current = null;
-    }, 4200);
-  }, []);
+  const showStampToast = useCallback(
+    (stamp: StampDefinition) => {
+      setUnlockedToast(stamp);
+      timers.schedule("stamp-toast", () => setUnlockedToast(null), 4200);
+    },
+    [timers],
+  );
 
   const dismissToast = useCallback(() => {
-    if (toastTimerRef.current !== null) {
-      window.clearTimeout(toastTimerRef.current);
-      toastTimerRef.current = null;
-    }
+    timers.cancel("stamp-toast");
     setUnlockedToast(null);
-  }, []);
+  }, [timers]);
 
   const recordSolve = useCallback(
     (input: SolveRecordInput) => {

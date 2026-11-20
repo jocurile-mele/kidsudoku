@@ -36,11 +36,39 @@ function extractImports(source: string): string[] {
   return imports;
 }
 
+function resolveRelativeImport(fromFile: string, specifier: string): string | null {
+  if (!specifier.startsWith(".")) return null;
+  const resolved = path.resolve(path.dirname(fromFile), specifier);
+  return rel(resolved);
+}
+
 describe("architecture guardrails (Dune contract)", () => {
   const sourceFiles = walkSourceFiles(SRC_DIR);
 
-  it("restricts localStorage access to the sole storage owner", () => {
-    const owner = "src/game/storage.ts";
+  it("enforces one-way imports: src/platform/ never imports application layers", () => {
+    const violations: string[] = [];
+
+    for (const file of sourceFiles) {
+      const r = rel(file);
+      if (!r.startsWith("src/platform/")) continue;
+      const content = fs.readFileSync(file, "utf8");
+      for (const spec of extractImports(content)) {
+        const target = resolveRelativeImport(file, spec);
+        if (!target) continue;
+        // Platform files may import siblings under src/platform/ or static repo assets (e.g., audio/)
+        if (target.startsWith("src/") && !target.startsWith("src/platform/")) {
+          violations.push(
+            `${r} imports ${target} — src/platform/ is a bottom-layer adapter and must never depend on application code.`,
+          );
+        }
+      }
+    }
+
+    expect(violations).toEqual([]);
+  });
+
+  it("restricts localStorage access to the sole storage adapter", () => {
+    const owner = "src/platform/storage.ts";
     const violations: string[] = [];
 
     for (const file of sourceFiles) {
@@ -48,7 +76,31 @@ describe("architecture guardrails (Dune contract)", () => {
       if (r === owner) continue;
       const content = stripComments(fs.readFileSync(file, "utf8"));
       if (/\blocalStorage\b/.test(content)) {
-        violations.push(`${r} accesses localStorage directly — use ${owner} instead.`);
+        violations.push(
+          `${r} accesses localStorage directly — use useProgress() from src/state/useProgress.ts (backed by ${owner}).`,
+        );
+      }
+    }
+
+    expect(violations).toEqual([]);
+  });
+
+  it("restricts storage adapter imports to the single-writer progress hook", () => {
+    const owner = "src/state/useProgress.ts";
+    const storageModule = "src/platform/storage.ts";
+    const violations: string[] = [];
+
+    for (const file of sourceFiles) {
+      const r = rel(file);
+      if (r === owner || r === storageModule) continue;
+      const content = fs.readFileSync(file, "utf8");
+      for (const spec of extractImports(content)) {
+        const target = resolveRelativeImport(file, spec);
+        if (target === "src/platform/storage" || target === "src/platform/storage.ts") {
+          violations.push(
+            `${r} imports ${storageModule} directly — use named commands on useProgress() from ${owner}.`,
+          );
+        }
       }
     }
 
@@ -56,7 +108,7 @@ describe("architecture guardrails (Dune contract)", () => {
   });
 
   it("restricts AudioContext and HTML Audio creation to the sole sound owner", () => {
-    const owner = "src/game/sound.ts";
+    const owner = "src/platform/sound.ts";
     const violations: string[] = [];
 
     for (const file of sourceFiles) {
@@ -74,7 +126,7 @@ describe("architecture guardrails (Dune contract)", () => {
   });
 
   it("restricts canvas-confetti imports to the sole confetti owner", () => {
-    const owner = "src/game/confetti.ts";
+    const owner = "src/platform/confetti.ts";
     const violations: string[] = [];
 
     for (const file of sourceFiles) {
@@ -83,25 +135,6 @@ describe("architecture guardrails (Dune contract)", () => {
       const content = fs.readFileSync(file, "utf8");
       if (extractImports(content).includes("canvas-confetti")) {
         violations.push(`${r} imports canvas-confetti directly — use helpers from ${owner}.`);
-      }
-    }
-
-    expect(violations).toEqual([]);
-  });
-
-  it("restricts storage read/write imports to the single-writer progress hook", () => {
-    const owner = "src/state/useProgress.ts";
-    const storageModule = "src/game/storage.ts";
-    const violations: string[] = [];
-
-    for (const file of sourceFiles) {
-      const r = rel(file);
-      if (r === owner || r === storageModule) continue;
-      const content = stripComments(fs.readFileSync(file, "utf8"));
-      if (/\b(loadProgress|saveProgress)\b/.test(content)) {
-        violations.push(
-          `${r} reads/writes progress directly — use named commands on useProgress() from ${owner}.`,
-        );
       }
     }
 

@@ -25,8 +25,9 @@ import {
   type Sudoku4x4Puzzle,
 } from "./game/sudoku4x4";
 import { type StampId, type ThemeId } from "./game/stamps";
-import { soundEngine, triggerHaptic } from "./game/sound";
-import { fireSetCompleteConfetti, fireSolvedConfetti } from "./game/confetti";
+import { soundEngine, triggerHaptic } from "./platform/sound";
+import { fireSetCompleteConfetti, fireSolvedConfetti } from "./platform/confetti";
+import { useManagedTimers } from "./platform/timers";
 import { useProgress } from "./state/useProgress";
 import { Header } from "./components/Header";
 import { ModeBar, type GameMode } from "./components/ModeBar";
@@ -126,9 +127,7 @@ export default function App() {
   const [logoPressCount, setLogoPressCount] = useState(0);
 
   const boardRef = useRef<HTMLDivElement | null>(null);
-  const autoAdvanceTimerRef = useRef<number | null>(null);
-  const wrongClearTimerRef = useRef<number | null>(null);
-  const multiDigitTimerRef = useRef<number | null>(null);
+  const timers = useManagedTimers();
 
   // Unlock iOS Safari AudioContext & pre-decode logo clip on first user touch/click
   useEffect(() => {
@@ -140,22 +139,7 @@ export default function App() {
     return () => window.removeEventListener("pointerdown", unlockOnce);
   }, []);
 
-  const clearTimers = useCallback(() => {
-    if (autoAdvanceTimerRef.current !== null) {
-      window.clearTimeout(autoAdvanceTimerRef.current);
-      autoAdvanceTimerRef.current = null;
-    }
-    if (wrongClearTimerRef.current !== null) {
-      window.clearTimeout(wrongClearTimerRef.current);
-      wrongClearTimerRef.current = null;
-    }
-    if (multiDigitTimerRef.current !== null) {
-      window.clearTimeout(multiDigitTimerRef.current);
-      multiDigitTimerRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => clearTimers, [clearTimers]);
+  const clearTimers = timers.cancelAll;
 
   const load2x2Puzzle = useCallback(
     (nextPuzzle: Puzzle, resetSetStars = false) => {
@@ -324,26 +308,37 @@ export default function App() {
         fireSolvedConfetti(getBoardOrigin());
       }
 
-      autoAdvanceTimerRef.current = window.setTimeout(() => {
-        if (justFinishedDaily) {
-          setDailyFinishedRun(true);
-        } else {
-          startNext2x2(justCompletedSet);
-        }
-      }, delayMs);
+      timers.schedule(
+        "auto-advance",
+        () => {
+          if (justFinishedDaily) {
+            setDailyFinishedRun(true);
+          } else {
+            startNext2x2(justCompletedSet);
+          }
+        },
+        delayMs,
+      );
     },
-    [dailyIndex, getBoardOrigin, mode, recordSolve, starsInSet, startNext2x2, streak, todayKey],
+    [
+      dailyIndex,
+      getBoardOrigin,
+      mode,
+      recordSolve,
+      starsInSet,
+      startNext2x2,
+      streak,
+      timers,
+      todayKey,
+    ],
   );
 
   const handleSelect2x2Number = useCallback(
     (digit: number, explicitSlot?: QuadrantIndex) => {
       if (solved || (mode === "daily" && dailyFinishedRun)) return;
 
-      if (multiDigitTimerRef.current !== null) {
-        window.clearTimeout(multiDigitTimerRef.current);
-        multiDigitTimerRef.current = null;
-        setPendingTypedPrefix("");
-      }
+      timers.cancel("multi-digit");
+      setPendingTypedPrefix("");
 
       // Single-missing mode (Classic & Daily)
       if (puzzle.missingCount === 1) {
@@ -351,10 +346,7 @@ export default function App() {
         const evaluation = evaluateGuess(puzzle, digit);
 
         if (evaluation.status === "correct") {
-          if (wrongClearTimerRef.current !== null) {
-            window.clearTimeout(wrongClearTimerRef.current);
-            wrongClearTimerRef.current = null;
-          }
+          timers.cancel("wrong-clear");
           celebrate2x2Win({ [puzzle.missingIndex]: digit });
         } else {
           soundEngine.playWrong();
@@ -370,14 +362,14 @@ export default function App() {
           });
           setFeedback({ kind: "wrong", message: getWrongFeedback(evaluation) });
 
-          if (wrongClearTimerRef.current !== null) {
-            window.clearTimeout(wrongClearTimerRef.current);
-          }
-          wrongClearTimerRef.current = window.setTimeout(() => {
-            setWrongGuess(null);
-            setWrongSlotIndex(null);
-            wrongClearTimerRef.current = null;
-          }, 760);
+          timers.schedule(
+            "wrong-clear",
+            () => {
+              setWrongGuess(null);
+              setWrongSlotIndex(null);
+            },
+            760,
+          );
         }
         return;
       }
@@ -430,14 +422,14 @@ export default function App() {
         setFilledSlots(keptOther);
         setActiveSlotIndex(targetSlot);
 
-        if (wrongClearTimerRef.current !== null) {
-          window.clearTimeout(wrongClearTimerRef.current);
-        }
-        wrongClearTimerRef.current = window.setTimeout(() => {
-          setWrongGuess(null);
-          setWrongSlotIndex(null);
-          wrongClearTimerRef.current = null;
-        }, 760);
+        timers.schedule(
+          "wrong-clear",
+          () => {
+            setWrongGuess(null);
+            setWrongSlotIndex(null);
+          },
+          760,
+        );
       }
     },
     [
@@ -449,6 +441,7 @@ export default function App() {
       mode,
       puzzle,
       solved,
+      timers,
       triedWrong,
     ],
   );
@@ -486,13 +479,7 @@ export default function App() {
         setSudokuConflicts(new Set([cellIdx, ...conflict.conflictingIndices]));
         setSudokuConflictKey((k) => k + 1);
         setFeedback({ kind: "wrong", message: conflict.message });
-        if (wrongClearTimerRef.current !== null) {
-          window.clearTimeout(wrongClearTimerRef.current);
-        }
-        wrongClearTimerRef.current = window.setTimeout(() => {
-          setSudokuConflicts(new Set());
-          wrongClearTimerRef.current = null;
-        }, 900);
+        timers.schedule("wrong-clear", () => setSudokuConflicts(new Set()), 900);
         return;
       }
 
@@ -539,7 +526,7 @@ export default function App() {
       const nextEmpty = firstEmptySudokuCell(nextBoard);
       setSudokuSelected(nextEmpty);
     },
-    [recordSolve, streak, sudokuBoard, sudokuPuzzle.givens, sudokuSelected, sudokuSolved],
+    [recordSolve, streak, sudokuBoard, sudokuPuzzle.givens, sudokuSelected, sudokuSolved, timers],
   );
 
   const handleEraseSudokuCell = useCallback(() => {
@@ -700,10 +687,7 @@ export default function App() {
       }
 
       if (e.key === "Enter" && pendingTypedPrefix) {
-        if (multiDigitTimerRef.current !== null) {
-          window.clearTimeout(multiDigitTimerRef.current);
-          multiDigitTimerRef.current = null;
-        }
+        timers.cancel("multi-digit");
         const val = Number(pendingTypedPrefix);
         setPendingTypedPrefix("");
         handleSelect2x2Number(val);
@@ -714,10 +698,7 @@ export default function App() {
         const digit = Number(e.key);
 
         if (pendingTypedPrefix) {
-          if (multiDigitTimerRef.current !== null) {
-            window.clearTimeout(multiDigitTimerRef.current);
-            multiDigitTimerRef.current = null;
-          }
+          timers.cancel("multi-digit");
           const combined = Number(`${pendingTypedPrefix}${digit}`);
           setPendingTypedPrefix("");
           if (combined <= puzzle.targetSum) {
@@ -736,11 +717,14 @@ export default function App() {
         if (shouldWaitForTwoDigit) {
           soundEngine.playTap();
           setPendingTypedPrefix(String(digit));
-          multiDigitTimerRef.current = window.setTimeout(() => {
-            setPendingTypedPrefix("");
-            multiDigitTimerRef.current = null;
-            handleSelect2x2Number(digit);
-          }, 680);
+          timers.schedule(
+            "multi-digit",
+            () => {
+              setPendingTypedPrefix("");
+              handleSelect2x2Number(digit);
+            },
+            680,
+          );
           return;
         }
 
@@ -771,6 +755,7 @@ export default function App() {
     startFreshSudoku,
     startNext2x2,
     sudokuSolved,
+    timers,
   ]);
 
   const completedNumbers = puzzle.cells.map((c, idx) =>

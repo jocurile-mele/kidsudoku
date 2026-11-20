@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { PersistedProgress } from "../game/storage";
-import { applySolveToProgress } from "./useProgress";
+import { applySolveToProgress, type PersistedProgress } from "./useProgress";
 
 function baseProgress(overrides: Partial<PersistedProgress> = {}): PersistedProgress {
   return {
