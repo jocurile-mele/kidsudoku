@@ -111,6 +111,7 @@ class SoundEngine {
     startTime: number,
     duration: number,
     volume = 0.14,
+    warmHarmonic = 0,
   ) {
     const osc = ctx.createOscillator();
     const overtone = ctx.createOscillator();
@@ -129,12 +130,19 @@ class SoundEngine {
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
     overtoneGain.gain.setValueAtTime(0.0001, startTime);
-    overtoneGain.gain.exponentialRampToValueAtTime(volume * 0.22, startTime + 0.008);
-    overtoneGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.35);
+    if (warmHarmonic > 0) {
+      overtoneGain.gain.exponentialRampToValueAtTime(warmHarmonic, startTime + 0.008);
+      overtoneGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.55);
+      overtone.connect(overtoneGain);
+      overtoneGain.connect(ctx.destination);
+    } else {
+      overtoneGain.gain.exponentialRampToValueAtTime(volume * 0.22, startTime + 0.008);
+      overtoneGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.35);
+      overtone.connect(overtoneGain);
+      overtoneGain.connect(gain);
+    }
 
     osc.connect(gain);
-    overtone.connect(overtoneGain);
-    overtoneGain.connect(gain);
     gain.connect(ctx.destination);
 
     osc.start(startTime);
@@ -203,8 +211,10 @@ class SoundEngine {
     if (!ctx) return;
 
     const now = ctx.currentTime;
-    this.playMarimbaNote(ctx, 261.63, now, 0.18, 0.1);
-    this.playMarimbaNote(ctx, 220.0, now + 0.09, 0.22, 0.09);
+    // Lower notes (C4/A3) need higher gain + an audible 2nd harmonic to match
+    // the perceived loudness of the higher-pitched success arpeggio on small speakers.
+    this.playMarimbaNote(ctx, 261.63, now, 0.24, 0.3, 0.12);
+    this.playMarimbaNote(ctx, 220.0, now + 0.1, 0.3, 0.28, 0.11);
   }
 
   playHint() {
