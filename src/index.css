@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fredoka", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+  --font-sans: "Nunito", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+
+  --color-paper: #fbf7ef;
+  --color-cream: #fffdf9;
+  --color-tray: #efe7d7;
+  --color-tray-edge: #dfd4be;
+  --color-ink: #2b2926;
+  --color-ink-soft: #6f685c;
+
+  --color-amber-warm: #e6a235;
+  --color-amber-deep: #b87914;
+  --color-amber-wash: #fef5e2;
+
+  --color-sage: #4a9d7c;
+  --color-sage-deep: #2e7559;
+  --color-sage-wash: #e8f5ef;
+
+  --color-coral: #df6b52;
+  --color-coral-deep: #b24832;
+  --color-coral-wash: #fdeee9;
+
+  --color-slate-sky: #5581ab;
+  --color-slate-wash: #ecf3f9;
+}
+
+@layer base {
+  html,
+  body {
+    min-height: 100%;
+    margin: 0;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
+    user-select: none;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 12% 10%, rgba(238, 198, 118, 0.17), transparent 42%),
+      radial-gradient(circle at 88% 88%, rgba(114, 184, 152, 0.14), transparent 44%),
+      radial-gradient(rgba(148, 132, 106, 0.16) 1.15px, transparent 1.15px);
+    background-size: 100vw 100vh, 100vw 100vh, 24px 24px;
+    background-repeat: no-repeat, no-repeat, repeat;
+    background-attachment: fixed;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tactile wooden/ceramic tray & tile surfaces */
+.board-tray {
+  background: linear-gradient(180deg, #ede4d3 0%, #f3ecde 100%);
+  box-shadow:
+    inset 0 3px 8px rgba(102, 85, 56, 0.12),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.7),
+    0 14px 36px -12px rgba(84, 68, 42, 0.16),
+    0 2px 6px rgba(84, 68, 42, 0.06);
+}
+
+.tile-given {
+  background: linear-gradient(180deg, #ffffff 0%, #fdfaf3 100%);
+  box-shadow:
+    0 5px 0 #dcd1bc,
+    0 8px 16px -6px rgba(72, 58, 36, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.tile-missing {
+  background: linear-gradient(180deg, #fffaf0 0%, #fef2d8 100%);
+  box-shadow:
+    inset 0 2px 6px rgba(184, 121, 20, 0.11),
+    0 0 0 1px rgba(230, 162, 53, 0.15);
+}
+
+.tile-solved {
+  background: linear-gradient(180deg, #f2faf6 0%, #e1f3ea 100%);
+  box-shadow:
+    0 5px 0 #9bcbb5,
+    0 10px 20px -6px rgba(46, 117, 89, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.tile-wrong {
+  background: linear-gradient(180deg, #fff5f2 0%, #fde7e0 100%);
+  box-shadow:
+    0 4px 0 #e5a494,
+    0 8px 16px -6px rgba(178, 72, 50, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.num-key {
+  background: linear-gradient(180deg, #ffffff 0%, #fcf8f0 100%);
+  box-shadow:
+    0 4px 0 #d9ceb9,
+    0 6px 12px -4px rgba(72, 58, 36, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transition: box-shadow 0.12s ease, background-color 0.15s ease, opacity 0.2s ease;
+}
+
+.num-key:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ffffff 0%, #fef9ed 100%);
+  box-shadow:
+    0 5px 0 #d4c4a4,
+    0 9px 16px -4px rgba(72, 58, 36, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.98);
+}
+
+.num-key:active:not(:disabled) {
+  box-shadow:
+    0 1px 0 #d9ceb9,
+    0 2px 4px rgba(72, 58, 36, 0.1);
+}
+
+.num-key-hint {
+  background: linear-gradient(180deg, #fffdf7 0%, #fef4db 100%);
+  box-shadow:
+    0 4px 0 #e0b563,
+    0 8px 16px -4px rgba(201, 138, 28, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.num-key-correct {
+  background: linear-gradient(180deg, #effaf4 0%, #dcf2e6 100%);
+  box-shadow:
+    0 4px 0 #8ec3aa,
+    0 8px 16px -4px rgba(46, 117, 89, 0.22);
+}
+
+.num-key-tried {
+  background: #f3ede2;
+  box-shadow: inset 0 2px 4px rgba(96, 82, 58, 0.08);
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-soft {
+    animation: none;
+  }
+}
