@@ -40,7 +40,7 @@ export function HowToPlayModal({ open, onClose }: HowToPlayModalProps) {
                 type="button"
                 onClick={onClose}
                 aria-label="Close instructions"
-                className="w-8 h-8 rounded-full flex items-center justify-center cs-muted-pill text-ink-soft hover:text-ink transition cursor-pointer"
+                className="w-8 h-8 rounded-full flex items-center justify-center cs-muted-pill cs-press-in text-ink-soft hover:text-ink cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -80,7 +80,8 @@ export function HowToPlayModal({ open, onClose }: HowToPlayModalProps) {
                 <span>
                   In <strong className="text-ink">2×2</strong> &amp;{' '}
                   <strong className="text-ink">2 Blank</strong>, switch target sums
-                  (<strong className="text-ink">5, 10, 20</strong>). Numbers can repeat and{' '}
+                  (<strong className="text-ink">5, 10, 20</strong>) in{' '}
+                  <strong className="text-ink">Settings</strong>. Numbers can repeat and{' '}
                   <strong className="text-ink">0 is allowed</strong>.
                 </span>
               </li>
@@ -123,7 +124,7 @@ export function HowToPlayModal({ open, onClose }: HowToPlayModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="w-full py-2.5 rounded-2xl bg-sage text-white font-display text-lg font-semibold shadow-[0_4px_0_#317559] [@media(hover:hover)]:hover:brightness-105 active:translate-y-[2px] transition cursor-pointer"
+              className="w-full py-2.5 rounded-2xl next-cta text-white font-display text-lg font-semibold [@media(hover:hover)]:hover:brightness-105 cursor-pointer"
             >
               Let&apos;s Play!
             </button>

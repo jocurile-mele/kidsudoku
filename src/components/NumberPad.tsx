@@ -48,6 +48,7 @@ export function NumberPad({
   onErase,
 }: NumberPadProps) {
   const [drag, setDrag] = useState<DragState | null>(null);
+  const [pressedDigit, setPressedDigit] = useState<number | null>(null);
   const dragSessionRef = useRef<{
     digit: number;
     startX: number;
@@ -110,6 +111,7 @@ export function NumberPad({
 
       dragSessionRef.current = null;
       setDrag(null);
+      setPressedDigit(null);
       onHoverDropTarget?.(null);
 
       if (cancelled) return;
@@ -174,8 +176,10 @@ export function NumberPad({
         key={digit}
         type="button"
         disabled={disabled}
+        data-pressed={!disabled && pressedDigit === digit ? 'true' : undefined}
         onPointerDown={(e) => {
           if (disabled || e.button > 0) return;
+          setPressedDigit(digit);
           dragSessionRef.current = {
             digit,
             startX: e.clientX,
@@ -191,7 +195,7 @@ export function NumberPad({
           if (disabled || e.detail !== 0) return;
           onSelect(digit);
         }}
-        whileTap={disabled ? undefined : { y: 3, scale: 0.96 }}
+        whileTap={disabled ? undefined : { scale: 0.94 }}
         animate={
           isWinningKey
             ? { scale: [1, 1.12, 1.04] }
@@ -199,7 +203,7 @@ export function NumberPad({
               ? { scale: [1, 1.04, 1] }
               : { scale: 1 }
         }
-        transition={{ type: 'spring', stiffness: 520, damping: 22 }}
+        transition={{ type: 'spring', stiffness: 650, damping: 28 }}
         aria-label={`Choose ${digit}`}
         style={{ touchAction: 'none' }}
         className={`relative border font-display font-bold flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${keySizeClass} ${
@@ -233,7 +237,8 @@ export function NumberPad({
                 type="button"
                 disabled={solved}
                 onClick={onErase}
-                whileTap={solved ? undefined : { y: 3, scale: 0.96 }}
+                whileTap={solved ? undefined : { scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 650, damping: 28 }}
                 aria-label="Clear selected cell"
                 title="Clear selected cell"
                 className="w-[54px] h-[58px] sm:w-[60px] sm:h-[64px] rounded-2xl border num-key text-ink-soft flex items-center justify-center cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"

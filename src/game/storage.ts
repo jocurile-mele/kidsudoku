@@ -1,3 +1,4 @@
+import type { TargetSum } from './puzzle';
 import { STAMPS, THEMES, type StampId, type ThemeId } from './stamps';
 
 export interface PersistedProgress {
@@ -7,6 +8,7 @@ export interface PersistedProgress {
   sudoku4x4Solved: number;
   soundEnabled: boolean;
   pipsEnabled: boolean;
+  targetSum: TargetSum;
   theme: ThemeId;
   pinnedStampId: StampId | null;
   dailyCompletedDates: string[];
@@ -22,6 +24,7 @@ const DEFAULT_PROGRESS: PersistedProgress = {
   sudoku4x4Solved: 0,
   soundEnabled: true,
   pipsEnabled: false,
+  targetSum: 10,
   theme: 'warm-paper',
   pinnedStampId: null,
   dailyCompletedDates: [],
@@ -30,6 +33,7 @@ const DEFAULT_PROGRESS: PersistedProgress = {
 
 const VALID_THEMES = new Set<string>(THEMES.map((t) => t.id));
 const VALID_STAMPS = new Set<string>(STAMPS.map((s) => s.id));
+const VALID_TARGET_SUMS = new Set<number>([5, 10, 20]);
 
 export function getTotalRewardCount(progress: PersistedProgress): number {
   return (
@@ -66,6 +70,11 @@ export function loadProgress(): PersistedProgress {
         typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
       pipsEnabled:
         typeof parsed.pipsEnabled === 'boolean' ? parsed.pipsEnabled : false,
+      targetSum:
+        typeof parsed.targetSum === 'number' &&
+        VALID_TARGET_SUMS.has(parsed.targetSum)
+          ? (parsed.targetSum as TargetSum)
+          : 10,
       theme:
         typeof parsed.theme === 'string' && VALID_THEMES.has(parsed.theme)
           ? (parsed.theme as ThemeId)

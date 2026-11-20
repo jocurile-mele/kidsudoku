@@ -70,7 +70,7 @@ export function StampShelfModal({
                 type="button"
                 onClick={onClose}
                 aria-label="Close stamp shelf"
-                className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center cs-muted-pill text-ink-soft hover:text-ink transition cursor-pointer"
+                className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center cs-muted-pill cs-press-in text-ink-soft hover:text-ink cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -96,7 +96,7 @@ export function StampShelfModal({
                       type="button"
                       disabled={!unlocked}
                       onClick={() => onSelectTheme(theme.id)}
-                      className={`relative flex flex-col items-start gap-2 p-2.5 rounded-2xl border text-left transition ${
+                      className={`relative flex flex-col items-start gap-2 p-2.5 rounded-2xl border text-left cs-press-in ${
                         selected
                           ? 'border-sage ring-2 ring-sage/25 bg-sage-wash/60 cursor-pointer'
                           : unlocked
@@ -171,7 +171,7 @@ export function StampShelfModal({
                               stamp.requiredRewards === 1 ? 'set' : 'sets'
                             }`
                       }
-                      className={`relative flex flex-col items-center justify-center gap-1 py-2.5 px-1.5 rounded-2xl border transition ${
+                      className={`relative flex flex-col items-center justify-center gap-1 py-2.5 px-1.5 rounded-2xl border cs-press-in ${
                         pinned
                           ? 'border-amber-warm ring-2 ring-amber-warm/30 bg-amber-wash/75 cursor-pointer'
                           : unlocked

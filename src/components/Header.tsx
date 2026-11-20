@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import {
   Flame,
   HelpCircle,
+  Settings,
   Sparkles,
   Star,
   Volume2,
@@ -19,6 +20,7 @@ interface HeaderProps {
   onLogoClick: () => void;
   onOpenShelf: () => void;
   onToggleSound: () => void;
+  onOpenSettings: () => void;
   onOpenHelp: () => void;
 }
 
@@ -33,10 +35,11 @@ export function Header({
   onLogoClick,
   onOpenShelf,
   onToggleSound,
+  onOpenSettings,
   onOpenHelp,
 }: HeaderProps) {
   return (
-    <header className="w-full max-w-xl mx-auto flex items-center justify-between gap-2 px-3 sm:px-4 pt-3 pb-1 sm:pt-4 sm:pb-1.5 [@media(orientation:landscape)_and_(max-height:520px)]:max-w-3xl [@media(orientation:landscape)_and_(max-height:520px)]:pt-2 [@media(orientation:landscape)_and_(max-height:520px)]:pb-1">
+    <header className="w-full max-w-xl mx-auto flex items-center justify-between gap-1.5 sm:gap-2 px-2.5 sm:px-4 pt-3 pb-1 sm:pt-4 sm:pb-1.5 [@media(orientation:landscape)_and_(max-height:520px)]:max-w-3xl [@media(orientation:landscape)_and_(max-height:520px)]:pt-2 [@media(orientation:landscape)_and_(max-height:520px)]:pb-1">
       {/* Interactive brand logo */}
       <motion.button
         type="button"
@@ -45,7 +48,7 @@ export function Header({
         transition={{ type: 'spring', stiffness: 500, damping: 24 }}
         aria-label="Play KidSudoku voice clip"
         title={soundEnabled ? 'Tap to play KidSudoku sound' : 'Unmute sound to play'}
-        className="group flex items-center gap-2 sm:gap-2.5 text-left rounded-2xl pr-1.5 sm:pr-2 -ml-1 p-1 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm shrink-0"
+        className="group flex items-center gap-1.5 sm:gap-2.5 text-left rounded-2xl pr-1 sm:pr-2 -ml-1 p-1 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm shrink-0"
       >
         <motion.div
           key={`logo-mark-${logoPressCount}`}
@@ -60,7 +63,7 @@ export function Header({
               : { rotate: 0, scale: 1 }
           }
           transition={{ duration: 0.45, ease: 'easeInOut' }}
-          className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[var(--cs-tray)] p-1.5 grid grid-cols-2 gap-1 shadow-[inset_0_1px_3px_rgba(0,0,0,0.14),0_2px_6px_rgba(0,0,0,0.08)] transition-all duration-200 ${
+          className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[var(--cs-tray)] p-1.5 grid grid-cols-2 gap-1 shadow-[inset_0_1px_3px_rgba(0,0,0,0.14),0_2px_6px_rgba(0,0,0,0.08)] transition-all duration-200 ${
             logoPlaying
               ? 'ring-3 ring-amber-warm/50'
               : '[@media(hover:hover)]:group-hover:ring-2 [@media(hover:hover)]:group-hover:ring-amber-warm/30'
@@ -78,10 +81,10 @@ export function Header({
           />
         </motion.div>
         <div className="leading-tight">
-          <h1 className="font-display text-lg sm:text-2xl font-bold tracking-tight text-ink">
+          <h1 className="font-display text-[17px] sm:text-2xl font-bold tracking-tight text-ink">
             KidSudoku
           </h1>
-          <p className="text-[11px] font-bold tracking-[0.12em] text-ink-soft">
+          <p className="text-[10px] sm:text-[11px] font-bold tracking-[0.12em] text-ink-soft">
             calmstead
           </p>
         </div>
@@ -95,11 +98,11 @@ export function Header({
           initial={{ scale: 0.92 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 460, damping: 20 }}
-          className="flex items-center gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-2.5 rounded-full cs-pill border"
+          className="flex items-center gap-1 sm:gap-1.5 h-7 min-[400px]:h-8 sm:h-9 px-1.5 sm:px-2.5 rounded-full cs-pill border"
           title={`${totalSolved} puzzles solved`}
         >
           <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-warm fill-amber-warm" />
-          <span className="font-display text-sm sm:text-base font-semibold text-ink">
+          <span className="font-display text-xs min-[400px]:text-sm sm:text-base font-semibold text-ink">
             {totalSolved}
           </span>
         </motion.div>
@@ -110,7 +113,7 @@ export function Header({
           initial={streak > 0 ? { scale: 0.88 } : false}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 460, damping: 18 }}
-          className={`flex items-center gap-1 h-8 sm:h-9 px-2 sm:px-2.5 rounded-full border transition-colors ${
+          className={`flex items-center gap-1 h-7 min-[400px]:h-8 sm:h-9 px-1.5 sm:px-2.5 rounded-full border transition-colors ${
             streak >= 3
               ? 'bg-amber-wash border-amber-warm/70 shadow-[0_2px_0_var(--cs-pill-lip)] text-amber-deep'
               : 'cs-pill text-ink'
@@ -124,7 +127,7 @@ export function Header({
                 : 'text-[var(--cs-ink-muted)]'
             }`}
           />
-          <span className="font-display text-sm sm:text-base font-semibold">
+          <span className="font-display text-xs min-[400px]:text-sm sm:text-base font-semibold">
             {streak}
           </span>
         </motion.div>
@@ -135,9 +138,9 @@ export function Header({
           onClick={onOpenShelf}
           aria-label="Open stamp shelf and themes"
           title="Stamps & Themes"
-          className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center cs-pill border text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px] transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
+          className="relative w-7 h-7 min-[400px]:w-8 min-[400px]:h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center cs-pill border text-ink-soft [@media(hover:hover)]:hover:text-ink cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
         >
-          <Sparkles className="w-4 h-4 text-amber-warm" />
+          <Sparkles className="w-3.5 h-3.5 min-[400px]:w-4 min-[400px]:h-4 text-amber-warm" />
           {hasUnseenReward && (
             <span
               aria-hidden="true"
@@ -152,13 +155,24 @@ export function Header({
           onClick={onToggleSound}
           aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
           title={soundEnabled ? 'Sound on (M)' : 'Sound muted (M)'}
-          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center cs-pill border text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px] transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
+          className="w-7 h-7 min-[400px]:w-8 min-[400px]:h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center cs-pill border text-ink-soft [@media(hover:hover)]:hover:text-ink cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
         >
           {soundEnabled ? (
-            <Volume2 className="w-4 h-4" />
+            <Volume2 className="w-3.5 h-3.5 min-[400px]:w-4 min-[400px]:h-4" />
           ) : (
-            <VolumeX className="w-4 h-4 text-[var(--cs-ink-muted)]" />
+            <VolumeX className="w-3.5 h-3.5 min-[400px]:w-4 min-[400px]:h-4 text-[var(--cs-ink-muted)]" />
           )}
+        </button>
+
+        {/* Settings button */}
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          aria-label="Open game settings"
+          title="Settings"
+          className="w-7 h-7 min-[400px]:w-8 min-[400px]:h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center cs-pill border text-ink-soft [@media(hover:hover)]:hover:text-ink cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
+        >
+          <Settings className="w-3.5 h-3.5 min-[400px]:w-4 min-[400px]:h-4" />
         </button>
 
         {/* Help button */}
@@ -167,9 +181,9 @@ export function Header({
           onClick={onOpenHelp}
           aria-label="How to play"
           title="How to play"
-          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center cs-pill border text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px] transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
+          className="w-7 h-7 min-[400px]:w-8 min-[400px]:h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center cs-pill border text-ink-soft [@media(hover:hover)]:hover:text-ink cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
         >
-          <HelpCircle className="w-4 h-4" />
+          <HelpCircle className="w-3.5 h-3.5 min-[400px]:w-4 min-[400px]:h-4" />
         </button>
       </div>
     </header>

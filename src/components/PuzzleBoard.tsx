@@ -1,11 +1,9 @@
 import { type RefObject } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Check, Sparkles } from 'lucide-react';
-import type { Puzzle, QuadrantIndex, TargetSum } from '../game/puzzle';
+import { Check } from 'lucide-react';
+import type { Puzzle, QuadrantIndex } from '../game/puzzle';
 import { HINT_GROUP_STYLES } from './TenFrameHint';
 import { DominoPips } from './DominoPips';
-
-const TARGET_OPTIONS: readonly TargetSum[] = [5, 10, 20];
 
 interface PuzzleBoardProps {
   puzzle: Puzzle;
@@ -20,8 +18,6 @@ interface PuzzleBoardProps {
   pipsEnabled: boolean;
   pendingTypedPrefix: string;
   hoveredDropIndex: number | null;
-  allowTargetSelect: boolean;
-  onChangeTargetSum?: (target: TargetSum) => void;
   boardRef: RefObject<HTMLDivElement | null>;
 }
 
@@ -38,8 +34,6 @@ export function PuzzleBoard({
   pipsEnabled,
   pendingTypedPrefix,
   hoveredDropIndex,
-  allowTargetSelect,
-  onChangeTargetSum,
   boardRef,
 }: PuzzleBoardProps) {
   const hintGroupByQuadrant = new Map<number, number>();
@@ -49,61 +43,6 @@ export function PuzzleBoard({
 
   return (
     <div className="w-full flex flex-col items-center">
-      {/* Rule chip + inline 5 / 10 / 20 target switcher */}
-      <div className="mb-2.5 flex items-center gap-2">
-        <motion.div
-          animate={solved ? { scale: [1, 1.06, 1] } : { scale: 1 }}
-          transition={{ duration: 0.35 }}
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-bold border transition-colors duration-200 ${
-            solved
-              ? 'bg-sage-wash border-sage/50 text-sage-deep'
-              : 'cs-surface text-ink-soft'
-          }`}
-        >
-          {solved ? (
-            <>
-              <Sparkles className="w-3.5 h-3.5 text-sage" />
-              <span>Sum equals {puzzle.targetSum}!</span>
-            </>
-          ) : allowTargetSelect && onChangeTargetSum ? (
-            <>
-              <span>Sum to</span>
-              <span
-                className="inline-flex items-center gap-0.5 p-0.5 rounded-full cs-muted-pill"
-                role="group"
-                aria-label="Target sum"
-              >
-                {TARGET_OPTIONS.map((t) => {
-                  const active = puzzle.targetSum === t;
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => onChangeTargetSum(t)}
-                      aria-pressed={active}
-                      className={`px-2 py-0.5 rounded-full font-display text-xs sm:text-sm font-bold transition cursor-pointer ${
-                        active
-                          ? 'bg-amber-warm text-white shadow-xs'
-                          : 'text-ink-soft [@media(hover:hover)]:hover:text-ink'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  );
-                })}
-              </span>
-            </>
-          ) : (
-            <>
-              <span>All 4 squares add up to</span>
-              <span className="font-display text-sm sm:text-base font-bold text-ink cs-muted-pill px-2 py-0.5 rounded-full">
-                {puzzle.targetSum}
-              </span>
-            </>
-          )}
-        </motion.div>
-      </div>
-
       {/* 2x2 Tactile Square Tray */}
       <div
         ref={boardRef}

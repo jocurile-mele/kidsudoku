@@ -35,7 +35,6 @@ import {
 } from "./game/storage";
 import { Header } from "./components/Header";
 import { ModeBar, type GameMode } from "./components/ModeBar";
-import { StarTrack } from "./components/StarTrack";
 import { PuzzleBoard } from "./components/PuzzleBoard";
 import { Sudoku4x4Board } from "./components/Sudoku4x4Board";
 import { TenFrameHint } from "./components/TenFrameHint";
@@ -43,6 +42,7 @@ import { NumberPad } from "./components/NumberPad";
 import { StampShelfModal } from "./components/StampShelfModal";
 import { StampIcon } from "./components/StampIcon";
 import { HowToPlayModal } from "./components/HowToPlayModal";
+import { SettingsModal } from "./components/SettingsModal";
 
 type FeedbackState =
   | { kind: "idle" }
@@ -84,11 +84,11 @@ export default function App() {
   const dailyPuzzles = useMemo(() => generateDailyPuzzles(todayKey), [todayKey]);
 
   const [mode, setMode] = useState<GameMode>("classic");
-  const [targetSum, setTargetSum] = useState<TargetSum>(10);
+  const targetSum = progress.targetSum;
 
   // 2x2 / 2-Blank / Daily state
   const [puzzle, setPuzzle] = useState<Puzzle>(() =>
-    generatePuzzle({ targetSum: 10, missingCount: 1 }),
+    generatePuzzle({ targetSum: progress.targetSum, missingCount: 1 }),
   );
   const [dailyIndex, setDailyIndex] = useState(0);
   const [dailyFinishedRun, setDailyFinishedRun] = useState(false);
@@ -123,6 +123,7 @@ export default function App() {
   // Modals, logo sound, stamp unlock toast
   const [helpOpen, setHelpOpen] = useState(false);
   const [shelfOpen, setShelfOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [logoPlaying, setLogoPlaying] = useState(false);
   const [logoPressCount, setLogoPressCount] = useState(0);
   const [unlockedToast, setUnlockedToast] = useState<StampDefinition | null>(null);
@@ -293,10 +294,12 @@ export default function App() {
       if (nextTarget === targetSum) return;
       soundEngine.playTap();
       triggerHaptic("tap");
-      setTargetSum(nextTarget);
-      const missingCount = mode === "two-blank" ? 2 : 1;
-      const next = generatePuzzle({ targetSum: nextTarget, missingCount });
-      load2x2Puzzle(next, false);
+      setProgress((prev) => ({ ...prev, targetSum: nextTarget }));
+      if (mode === "classic" || mode === "two-blank") {
+        const missingCount = mode === "two-blank" ? 2 : 1;
+        const next = generatePuzzle({ targetSum: nextTarget, missingCount });
+        load2x2Puzzle(next, false);
+      }
     },
     [load2x2Puzzle, mode, targetSum],
   );
@@ -747,10 +750,11 @@ export default function App() {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-      if (helpOpen || shelfOpen) {
+      if (helpOpen || shelfOpen || settingsOpen) {
         if (e.key === "Escape") {
           setHelpOpen(false);
           setShelfOpen(false);
+          setSettingsOpen(false);
         }
         return;
       }
@@ -855,6 +859,7 @@ export default function App() {
     pendingTypedPrefix,
     puzzle.neededSum,
     puzzle.targetSum,
+    settingsOpen,
     shelfOpen,
     solved,
     starsInSet,
@@ -902,6 +907,11 @@ export default function App() {
           onLogoClick={handleLogoClick}
           onOpenShelf={handleOpenShelf}
           onToggleSound={handleToggleSound}
+          onOpenSettings={() => {
+            soundEngine.playTap();
+            triggerHaptic("tap");
+            setSettingsOpen(true);
+          }}
           onOpenHelp={() => {
             soundEngine.playTap();
             triggerHaptic("tap");
@@ -967,7 +977,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handleChangeMode("classic")}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-sage text-white font-display text-base font-semibold shadow-[0_4px_0_#317559] cursor-pointer active:translate-y-[2px] transition"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-2xl next-cta text-white font-display text-base font-semibold [@media(hover:hover)]:hover:brightness-105 cursor-pointer"
                 >
                   Play Free 2×2
                 </button>
@@ -984,22 +994,8 @@ export default function App() {
           </main>
         ) : (
           <main className="flex-1 w-full max-w-xl mx-auto px-3 sm:px-4 flex flex-col items-center justify-center gap-2.5 sm:gap-3 py-1 [@media(orientation:landscape)_and_(max-height:520px)]:max-w-3xl [@media(orientation:landscape)_and_(max-height:520px)]:grid [@media(orientation:landscape)_and_(max-height:520px)]:grid-cols-[auto_1fr] [@media(orientation:landscape)_and_(max-height:520px)]:items-center [@media(orientation:landscape)_and_(max-height:520px)]:gap-5">
-            {/* Left column in mobile landscape: StarTrack + Board */}
+            {/* Left column in mobile landscape: Board */}
             <div className="w-full flex flex-col items-center gap-2 sm:gap-2.5">
-              {mode !== "sudoku-4x4" && (
-                <StarTrack
-                  starsInSet={mode === "daily" ? dailyIndex + (solved ? 1 : 0) : starsInSet}
-                  setsCompleted={progress.setsCompleted}
-                  pinnedStampId={progress.pinnedStampId}
-                  onOpenShelf={handleOpenShelf}
-                  dailyLabel={
-                    mode === "daily"
-                      ? `Daily · ${Math.min(dailyIndex + 1, DAILY_SIZE)}/${DAILY_SIZE}`
-                      : null
-                  }
-                />
-              )}
-
               {mode === "sudoku-4x4" ? (
                 <Sudoku4x4Board
                   puzzle={sudokuPuzzle}
@@ -1031,8 +1027,6 @@ export default function App() {
                   pipsEnabled={progress.pipsEnabled}
                   pendingTypedPrefix={pendingTypedPrefix}
                   hoveredDropIndex={hoveredDropIndex}
-                  allowTargetSelect={mode === "classic" || mode === "two-blank"}
-                  onChangeTargetSum={handleChangeTargetSum}
                   boardRef={boardRef}
                 />
               )}
@@ -1101,7 +1095,7 @@ export default function App() {
                     </motion.div>
                   ) : (
                     <motion.p
-                      key={`idle-${mode}-${hintLevel}`}
+                      key={`idle-${mode}-${hintLevel}-${puzzle.targetSum}-${dailyIndex}`}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0, transition: { duration: 0.08 } }}
@@ -1115,9 +1109,11 @@ export default function App() {
                           which one makes {puzzle.targetSum}?
                         </span>
                       ) : mode === "two-blank" ? (
-                        "Any pair that reaches the target wins — tap or drag!"
+                        `Make ${puzzle.targetSum} with any pair — tap or drag!`
+                      ) : mode === "daily" ? (
+                        `Daily ${dailyIndex + 1}/${DAILY_SIZE} · Make ${puzzle.targetSum} — tap or drag a number`
                       ) : (
-                        "Tap or drag a number into the glowing square"
+                        `Make ${puzzle.targetSum} — tap or drag into the glowing square`
                       )}
                     </motion.p>
                   )}
@@ -1164,8 +1160,8 @@ export default function App() {
                 onErase={handleEraseSudokuCell}
               />
 
-              {/* Secondary actions — swaps cleanly into Next CTA while solved (Option A1) */}
-              <div className="min-h-[42px] flex items-center justify-center pt-0.5">
+              {/* Secondary actions — subtler & separated below the number pad; swaps cleanly into Next CTA while solved */}
+              <div className="min-h-[42px] flex items-center justify-center mt-4 sm:mt-5 [@media(max-height:700px)]:mt-2 [@media(orientation:landscape)_and_(max-height:520px)]:mt-1">
                 <AnimatePresence mode="wait">
                   {feedback.kind === "solved" ? (
                     <motion.div
@@ -1188,7 +1184,7 @@ export default function App() {
                             ? startFreshSudoku()
                             : startNext2x2(feedback.justCompletedSet)
                         }
-                        className="next-cta relative overflow-hidden inline-flex items-center justify-center gap-1.5 px-5 py-2 rounded-full text-white text-sm font-extrabold [@media(hover:hover)]:hover:brightness-105 active:translate-y-[1px] transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage"
+                        className="next-cta relative overflow-hidden inline-flex items-center justify-center gap-1.5 px-5 py-2 rounded-full text-white text-sm font-extrabold [@media(hover:hover)]:hover:brightness-105 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage"
                       >
                         {feedback.autoAdvanceMs !== null && (
                           <span
@@ -1221,15 +1217,15 @@ export default function App() {
                         type="button"
                         onClick={handleHint}
                         disabled={mode === "sudoku-4x4" ? sudokuSolved : solved || hintLevel >= 2}
-                        className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold border transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
                           (mode === "sudoku-4x4" ? sudokuSolved : solved || hintLevel >= 2)
-                            ? "cs-muted-pill text-[var(--cs-ink-muted)] cursor-default"
+                            ? "cs-subtle-btn-disabled cursor-default"
                             : mode !== "sudoku-4x4" && hintLevel === 1
-                              ? "bg-amber-wash border-amber-warm/65 text-amber-deep shadow-[0_2px_0_var(--cs-pill-lip)] active:translate-y-[1px]"
-                              : "cs-pill text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px]"
+                              ? "cs-subtle-btn-active cursor-pointer"
+                              : "cs-subtle-btn cursor-pointer"
                         }`}
                       >
-                        <Lightbulb className="w-4 h-4" />
+                        <Lightbulb className="w-3.5 h-3.5" />
                         <span>
                           {mode === "sudoku-4x4"
                             ? "Hint"
@@ -1246,13 +1242,11 @@ export default function App() {
                           type="button"
                           onClick={handleTogglePips}
                           aria-pressed={progress.pipsEnabled}
-                          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold border transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
-                            progress.pipsEnabled
-                              ? "bg-amber-wash border-amber-warm/65 text-amber-deep shadow-[0_2px_0_var(--cs-pill-lip)] active:translate-y-[1px]"
-                              : "cs-pill text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px]"
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
+                            progress.pipsEnabled ? "cs-subtle-btn-active" : "cs-subtle-btn"
                           }`}
                         >
-                          <Grip className="w-4 h-4" />
+                          <Grip className="w-3.5 h-3.5" />
                           <span>Dots</span>
                         </button>
                       )}
@@ -1261,10 +1255,11 @@ export default function App() {
                         <button
                           type="button"
                           onClick={handleSkip}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold cs-pill border text-ink-soft [@media(hover:hover)]:hover:text-ink active:translate-y-[1px] transition cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
+                          aria-label={mode === "sudoku-4x4" ? "New 4 by 4 board" : "New square"}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold cs-subtle-btn border cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
-                          <span>{mode === "sudoku-4x4" ? "New Board" : "New Square"}</span>
+                          <span>New</span>
                         </button>
                       )}
                     </motion.div>
@@ -1284,6 +1279,26 @@ export default function App() {
           onSelectTheme={handleSelectTheme}
           pinnedStampId={progress.pinnedStampId}
           onPinStamp={handlePinStamp}
+        />
+
+        <SettingsModal
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          mode={mode}
+          targetSum={targetSum}
+          onChangeTargetSum={handleChangeTargetSum}
+          starsInSet={mode === "daily" ? dailyIndex + (solved ? 1 : 0) : starsInSet}
+          setsCompleted={progress.setsCompleted}
+          pinnedStampId={progress.pinnedStampId}
+          dailyLabel={
+            mode === "daily"
+              ? `Daily · ${Math.min(dailyIndex + 1, DAILY_SIZE)}/${DAILY_SIZE}`
+              : null
+          }
+          onOpenShelf={() => {
+            setSettingsOpen(false);
+            handleOpenShelf();
+          }}
         />
 
         <HowToPlayModal open={helpOpen} onClose={() => setHelpOpen(false)} />

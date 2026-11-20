@@ -38,7 +38,7 @@ export function ModeBar({
             type="button"
             onClick={() => onChangeMode(item.id)}
             aria-current={active ? 'page' : undefined}
-            className={`relative px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-[13px] font-bold transition-colors cursor-pointer flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
+            className={`relative px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-[13px] font-bold transition-[color,transform] duration-100 active:scale-[0.96] cursor-pointer flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm ${
               active ? 'text-ink' : 'text-ink-soft [@media(hover:hover)]:hover:text-ink'
             }`}
           >
