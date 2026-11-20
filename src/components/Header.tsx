@@ -6,6 +6,9 @@ interface HeaderProps {
   streak: number;
   bestStreak: number;
   soundEnabled: boolean;
+  logoPlaying: boolean;
+  logoPressCount: number;
+  onLogoClick: () => void;
   onToggleSound: () => void;
   onOpenHelp: () => void;
 }
@@ -15,22 +18,55 @@ export function Header({
   streak,
   bestStreak,
   soundEnabled,
+  logoPlaying,
+  logoPressCount,
+  onLogoClick,
   onToggleSound,
   onOpenHelp,
 }: HeaderProps) {
   return (
     <header className="w-full max-w-xl mx-auto flex items-center justify-between gap-3 px-4 pt-4 pb-2 sm:pt-6">
-      {/* Brand mark */}
-      <div className="flex items-center gap-2.5">
-        <div
+      {/* Interactive brand logo */}
+      <motion.button
+        type="button"
+        onClick={onLogoClick}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 24 }}
+        aria-label="Play KidSudoku voice clip"
+        title={soundEnabled ? 'Tap to play KidSudoku sound' : 'Unmute sound to play'}
+        className="group flex items-center gap-2.5 text-left rounded-2xl pr-2 -ml-1 p-1 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-warm"
+      >
+        <motion.div
+          key={`logo-mark-${logoPressCount}`}
           aria-hidden="true"
-          className="w-10 h-10 rounded-xl bg-[#efe7d7] p-1.5 grid grid-cols-2 gap-1 shadow-[inset_0_1px_3px_rgba(92,76,48,0.14),0_2px_6px_rgba(92,76,48,0.08)]"
+          initial={false}
+          animate={
+            logoPressCount > 0
+              ? {
+                  rotate: [0, -8, 8, -4, 0],
+                  scale: [1, 1.12, 1.04, 1],
+                }
+              : { rotate: 0, scale: 1 }
+          }
+          transition={{ duration: 0.45, ease: 'easeInOut' }}
+          className={`relative w-10 h-10 rounded-xl bg-[#efe7d7] p-1.5 grid grid-cols-2 gap-1 shadow-[inset_0_1px_3px_rgba(92,76,48,0.14),0_2px_6px_rgba(92,76,48,0.08)] transition-all duration-200 ${
+            logoPlaying
+              ? 'ring-3 ring-amber-warm/50 bg-[#f6ecd7]'
+              : 'group-hover:ring-2 group-hover:ring-amber-warm/30'
+          }`}
         >
           <span className="rounded-[4px] bg-[#fffdf9] shadow-[0_1px_0_#d8ccb6]" />
           <span className="rounded-[4px] bg-[#fffdf9] shadow-[0_1px_0_#d8ccb6]" />
           <span className="rounded-[4px] bg-[#fffdf9] shadow-[0_1px_0_#d8ccb6]" />
-          <span className="rounded-[4px] bg-[#fdecc8] border border-dashed border-[#e5a63a]" />
-        </div>
+          <span
+            className={`rounded-[4px] border border-dashed transition-colors ${
+              logoPlaying
+                ? 'bg-sage-wash border-sage'
+                : 'bg-[#fdecc8] border-[#e5a63a]'
+            }`}
+          />
+        </motion.div>
         <div className="leading-tight">
           <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-ink">
             Make 10
@@ -39,7 +75,7 @@ export function Header({
             KidSudoku
           </p>
         </div>
-      </div>
+      </motion.button>
 
       {/* Stats & utility buttons */}
       <div className="flex items-center gap-1.5 sm:gap-2">

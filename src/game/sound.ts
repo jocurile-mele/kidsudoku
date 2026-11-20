@@ -1,9 +1,18 @@
+import logoClipUrl from '../../audio/kidsudoku-japanese.mp3';
+
 class SoundEngine {
   private ctx: AudioContext | null = null;
+  private logoAudio: HTMLAudioElement | null = null;
+  private logoPlayToken = 0;
   private enabled = true;
 
   setEnabled(value: boolean) {
     this.enabled = value;
+    if (!value && this.logoAudio) {
+      this.logoAudio.pause();
+      this.logoAudio.currentTime = 0;
+      this.logoPlayToken++;
+    }
   }
 
   isEnabled(): boolean {
@@ -144,6 +153,39 @@ class SoundEngine {
     const now = ctx.currentTime;
     this.playMarimbaNote(ctx, 698.46, now, 0.28, 0.08);
     this.playMarimbaNote(ctx, 880.0, now + 0.08, 0.32, 0.09);
+  }
+
+  playLogoClip(onFinish?: () => void): boolean {
+    if (!this.enabled || typeof Audio === 'undefined') {
+      return false;
+    }
+
+    if (!this.logoAudio) {
+      this.logoAudio = new Audio(logoClipUrl);
+      this.logoAudio.preload = 'auto';
+    }
+
+    const token = ++this.logoPlayToken;
+    const audio = this.logoAudio;
+
+    const finish = () => {
+      if (this.logoPlayToken === token) {
+        onFinish?.();
+      }
+    };
+
+    audio.onended = finish;
+    audio.onerror = finish;
+    audio.currentTime = 0;
+
+    const playPromise = audio.play();
+    if (playPromise) {
+      playPromise.catch(() => {
+        finish();
+      });
+    }
+
+    return true;
   }
 }
 

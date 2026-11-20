@@ -46,6 +46,8 @@ export default function App() {
   const [hintChoices, setHintChoices] = useState<number[] | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [pendingTensDigit, setPendingTensDigit] = useState(false);
+  const [logoPlaying, setLogoPlaying] = useState(false);
+  const [logoPressCount, setLogoPressCount] = useState(0);
 
   const boardRef = useRef<HTMLDivElement | null>(null);
   const autoAdvanceTimerRef = useRef<number | null>(null);
@@ -218,9 +220,21 @@ export default function App() {
       soundEngine.setEnabled(nextEnabled);
       if (nextEnabled) {
         soundEngine.playTap();
+      } else {
+        setLogoPlaying(false);
       }
       return { ...prev, soundEnabled: nextEnabled };
     });
+  }, []);
+
+  const handleLogoClick = useCallback(() => {
+    setLogoPressCount((c) => c + 1);
+    const started = soundEngine.playLogoClip(() => {
+      setLogoPlaying(false);
+    });
+    if (started) {
+      setLogoPlaying(true);
+    }
   }, []);
 
   // Keyboard support (0-9, smart "10" typing, H for hint, M for mute, Enter/Space for next)
@@ -312,6 +326,9 @@ export default function App() {
           streak={streak}
           bestStreak={progress.bestStreak}
           soundEnabled={progress.soundEnabled}
+          logoPlaying={logoPlaying}
+          logoPressCount={logoPressCount}
+          onLogoClick={handleLogoClick}
           onToggleSound={handleToggleSound}
           onOpenHelp={() => {
             soundEngine.playTap();
