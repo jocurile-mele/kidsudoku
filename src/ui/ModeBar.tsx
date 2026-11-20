@@ -1,33 +1,26 @@
+import type { ReactNode } from "react";
 import { motion } from "motion/react";
-import { CalendarCheck, CalendarDays, Grid2X2, LayoutGrid, Sparkles } from "lucide-react";
 
-export type GameMode = "classic" | "two-blank" | "sudoku-4x4" | "daily";
-
-interface ModeBarProps {
-  mode: GameMode;
-  onChangeMode: (mode: GameMode) => void;
-  dailyCompletedToday: boolean;
+export interface ModeBarItem {
+  id: string;
+  shortLabel: string;
+  icon: ReactNode;
 }
 
-const MODES: Array<{
-  id: GameMode;
-  label: string;
-  shortLabel: string;
-}> = [
-  { id: "classic", label: "2×2", shortLabel: "2×2" },
-  { id: "two-blank", label: "2 Blank", shortLabel: "2 Blank" },
-  { id: "sudoku-4x4", label: "4×4", shortLabel: "4×4" },
-  { id: "daily", label: "Daily", shortLabel: "Daily" },
-];
+interface ModeBarProps {
+  modes: readonly ModeBarItem[];
+  activeModeId: string;
+  onChangeMode: (modeId: string) => void;
+}
 
-export function ModeBar({ mode, onChangeMode, dailyCompletedToday }: ModeBarProps) {
+export function ModeBar({ modes, activeModeId, onChangeMode }: ModeBarProps) {
   return (
     <nav
       aria-label="Game modes"
       className="inline-flex items-center p-1 rounded-full cs-muted-pill border shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]"
     >
-      {MODES.map((item) => {
-        const active = mode === item.id;
+      {modes.map((item) => {
+        const active = activeModeId === item.id;
         return (
           <button
             key={item.id}
@@ -46,15 +39,7 @@ export function ModeBar({ mode, onChangeMode, dailyCompletedToday }: ModeBarProp
               />
             )}
             <span className="relative z-10 flex items-center gap-1">
-              {item.id === "classic" && <Grid2X2 className="w-3.5 h-3.5" />}
-              {item.id === "two-blank" && <Sparkles className="w-3.5 h-3.5" />}
-              {item.id === "sudoku-4x4" && <LayoutGrid className="w-3.5 h-3.5" />}
-              {item.id === "daily" &&
-                (dailyCompletedToday ? (
-                  <CalendarCheck className="w-3.5 h-3.5 text-sage" />
-                ) : (
-                  <CalendarDays className="w-3.5 h-3.5" />
-                ))}
+              {item.icon}
               <span>{item.shortLabel}</span>
             </span>
           </button>

@@ -8,7 +8,7 @@ import {
   getRow,
   isBoxComplete,
   type Sudoku4x4Puzzle,
-} from "../game/sudoku4x4";
+} from "./sudoku4x4";
 
 interface Sudoku4x4BoardProps {
   puzzle: Sudoku4x4Puzzle;

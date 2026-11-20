@@ -25,6 +25,11 @@ setup-hooks:
     git config core.hooksPath .githooks
     @echo "Git hooks enabled (core.hooksPath=.githooks)"
 
+# Scaffold a new owned game mode under src/modes/<slug>/
+[group('dev')]
+new-mode slug:
+    node scripts/new-mode.mjs "{{slug}}"
+
 # Format files with Oxfmt (vp fmt)
 [group('verify')]
 fmt:

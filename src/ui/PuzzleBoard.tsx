@@ -1,7 +1,7 @@
 import { type RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Check } from "lucide-react";
-import type { Puzzle, QuadrantIndex } from "../game/puzzle";
+import type { Puzzle, QuadrantIndex } from "../engine/make-sum/puzzle";
 import { HINT_GROUP_STYLES } from "./TenFrameHint";
 import { DominoPips } from "./DominoPips";
 

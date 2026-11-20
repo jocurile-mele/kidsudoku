@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import type { Puzzle, QuadrantIndex } from "../game/puzzle";
+import type { Puzzle, QuadrantIndex } from "../engine/make-sum/puzzle";
 
 export const HINT_GROUP_STYLES = [
   {

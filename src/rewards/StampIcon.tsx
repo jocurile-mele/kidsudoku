@@ -1,4 +1,4 @@
-import type { StampId } from "../game/stamps";
+import type { StampId } from "./stamps";
 
 interface StampIconProps {
   id: StampId;

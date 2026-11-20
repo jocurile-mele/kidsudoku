@@ -1,9 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import type { TargetSum } from "../game/puzzle";
-import { STAMPS, THEMES, type StampDefinition, type StampId, type ThemeId } from "../game/stamps";
+import type { TargetSum } from "../engine/make-sum/puzzle";
+import {
+  STAMPS,
+  THEMES,
+  type StampDefinition,
+  type StampId,
+  type ThemeId,
+} from "../rewards/stamps";
 import { soundEngine } from "../platform/sound";
 import { readJsonStorage, writeJsonStorage } from "../platform/storage";
 import { useManagedTimers } from "../platform/timers";
+
+export type { TargetSum };
 
 export interface PersistedProgress {
   totalSolved: number;

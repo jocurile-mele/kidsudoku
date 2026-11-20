@@ -1,9 +1,8 @@
 import { AnimatePresence, motion } from "motion/react";
 import { SlidersHorizontal, Star, X } from "lucide-react";
-import { DAILY_SIZE, SET_SIZE, type TargetSum } from "../game/puzzle";
-import type { StampId } from "../game/stamps";
-import type { GameMode } from "./ModeBar";
-import { StarTrack } from "./StarTrack";
+import type { TargetSum } from "../engine/make-sum/puzzle";
+import type { StampId } from "../rewards/stamps";
+import { StarTrack } from "../rewards/StarTrack";
 
 const TARGET_OPTIONS: ReadonlyArray<{ value: TargetSum; label: string }> = [
   { value: 5, label: "Warm-up" },
@@ -14,10 +13,11 @@ const TARGET_OPTIONS: ReadonlyArray<{ value: TargetSum; label: string }> = [
 interface SettingsModalProps {
   open: boolean;
   onClose: () => void;
-  mode: GameMode;
+  supportsTargetSum: boolean;
   targetSum: TargetSum;
   onChangeTargetSum: (target: TargetSum) => void;
   starsInSet: number;
+  setSize: number;
   setsCompleted: number;
   pinnedStampId: StampId | null;
   dailyLabel: string | null;
@@ -27,20 +27,18 @@ interface SettingsModalProps {
 export function SettingsModal({
   open,
   onClose,
-  mode,
+  supportsTargetSum,
   targetSum,
   onChangeTargetSum,
   starsInSet,
+  setSize,
   setsCompleted,
   pinnedStampId,
   dailyLabel,
   onOpenShelf,
 }: SettingsModalProps) {
-  const targetAppliesToCurrentMode = mode === "classic" || mode === "two-blank";
-  const isDaily = mode === "daily";
-  const remaining = isDaily
-    ? Math.max(0, DAILY_SIZE - starsInSet)
-    : Math.max(0, SET_SIZE - starsInSet);
+  const isDaily = dailyLabel !== null;
+  const remaining = Math.max(0, setSize - starsInSet);
 
   return (
     <AnimatePresence>
@@ -130,7 +128,7 @@ export function SettingsModal({
               </div>
 
               <p className="text-[11px] font-semibold text-ink-soft mt-2">
-                {targetAppliesToCurrentMode
+                {supportsTargetSum
                   ? `All 4 squares add up to ${targetSum} in 2×2 & 2 Blank.`
                   : "Applies to 2×2 & 2 Blank modes (Daily & 4×4 always sum to 10)."}
               </p>

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { Check, Lock, Palette, Pin, Sparkles, X } from "lucide-react";
-import { STAMPS, THEMES, isThemeUnlocked, type StampId, type ThemeId } from "../game/stamps";
+import { STAMPS, THEMES, isThemeUnlocked, type StampId, type ThemeId } from "./stamps";
 import { StampIcon } from "./StampIcon";
 
 interface StampShelfModalProps {

@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { Award, CalendarDays, Star } from "lucide-react";
-import { SET_SIZE } from "../game/puzzle";
-import { STAMPS, type StampId } from "../game/stamps";
+import { SET_SIZE } from "../engine/make-sum/puzzle";
+import { STAMPS, type StampId } from "./stamps";
 import { StampIcon } from "./StampIcon";
 
 interface StarTrackProps {
